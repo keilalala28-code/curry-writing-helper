@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+.env
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
+
+# 原始文章文件（太大，云端不需要）
+11月爆款分类/
+1月爆款分类/
+*.zip
+
+# Screenshots
+*.png
+
+# Claude
+.claude/
