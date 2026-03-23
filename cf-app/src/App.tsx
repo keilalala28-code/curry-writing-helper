@@ -14,6 +14,7 @@ import BatchAnalysis from './pages/BatchAnalysis'
 import Writing from './pages/Writing'
 import Routine from './pages/Routine'
 import Media from './pages/Media'
+import Health from './pages/Health'
 import { checkAuth } from './lib/auth'
 import { useTheme } from './lib/theme'
 
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/writing" element={<Writing />} />
         <Route path="/routine" element={<Routine />} />
         <Route path="/media" element={<Media />} />
+        <Route path="/health" element={<Health />} />
       </Routes>
     </Layout>
   )

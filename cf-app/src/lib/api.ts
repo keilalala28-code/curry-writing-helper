@@ -199,6 +199,18 @@ export const api = {
     getCalendar: (year: number, month: number) =>
       get<{ year: number; month: number; days: CalendarDay[] }>('/routine/calendar', { year, month }),
   },
+  health: {
+    getWeight: (days?: number) => get<{ records: HealthWeight[]; goal: number | null }>('/health/weight', days ? { days } : undefined),
+    saveWeight: (date: string, weight: number, note?: string) => post<{ success: boolean }>('/health/weight', { date, weight, note }),
+    deleteWeight: (date: string) => del(`/health/weight/${date}`),
+    saveGoal: (weight_goal: number) => post<{ success: boolean }>('/health/goal', { weight_goal }),
+    getMeasurements: () => get<HealthMeasurement[]>('/health/measurements'),
+    saveMeasurement: (data: Partial<HealthMeasurement>) => post<{ success: boolean }>('/health/measurements', data),
+    deleteMeasurement: (date: string) => del(`/health/measurements/${date}`),
+    getExercise: () => get<HealthExercise[]>('/health/exercise'),
+    saveExercise: (data: { date: string; type: string; duration?: number; calories?: number; note?: string }) => post<{ id: string; success: boolean }>('/health/exercise', data),
+    deleteExercise: (id: string) => del(`/health/exercise/${id}`),
+  },
   media: {
     getPlatforms: () => get<MediaPlatform[]>('/media/platforms'),
     updatePlatform: (platform: string, data: { followers: number; month_change: number }) =>
@@ -256,6 +268,37 @@ export interface CalendarDay {
   completed: number
   total: number
   pct: number
+}
+
+export interface HealthWeight {
+  id: string
+  date: string
+  weight: number
+  note: string
+  created_at: number
+}
+
+export interface HealthMeasurement {
+  id: string
+  date: string
+  chest: number | null
+  waist: number | null
+  hips: number | null
+  thigh: number | null
+  arm: number | null
+  calf: number | null
+  wrist: number | null
+  created_at: number
+}
+
+export interface HealthExercise {
+  id: string
+  date: string
+  type: string
+  duration: number | null
+  calories: number | null
+  note: string
+  created_at: number
 }
 
 export interface BadgeDef {

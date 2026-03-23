@@ -2093,4 +2093,93 @@ app.post('/media/script/transcribe', async (c) => {
   }
 })
 
+// ─── Health: Weight ───────────────────────────────────────────────────────────
+
+app.get('/health/weight', async (c) => {
+  const { days = '30' } = c.req.query()
+  const limit = Math.min(365, Math.max(7, parseInt(days)))
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM health_weight ORDER BY date DESC LIMIT ?'
+  ).bind(limit).all()
+  const goal = await c.env.DB.prepare("SELECT value FROM health_goals WHERE key = 'weight_goal'").first<{ value: string }>()
+  return c.json({ records: results, goal: goal ? parseFloat(goal.value) : null })
+})
+
+app.post('/health/weight', async (c) => {
+  const { date, weight, note = '' } = await c.req.json()
+  if (!date || weight == null) return c.json({ error: 'date and weight required' }, 400)
+  const id = crypto.randomUUID()
+  await c.env.DB.prepare(
+    'INSERT INTO health_weight (id, date, weight, note) VALUES (?, ?, ?, ?) ON CONFLICT(date) DO UPDATE SET weight=excluded.weight, note=excluded.note'
+  ).bind(id, date, weight, note).run()
+  return c.json({ success: true })
+})
+
+app.delete('/health/weight/:date', async (c) => {
+  await c.env.DB.prepare('DELETE FROM health_weight WHERE date = ?').bind(c.req.param('date')).run()
+  return c.json({ success: true })
+})
+
+app.post('/health/goal', async (c) => {
+  const { weight_goal } = await c.req.json()
+  if (weight_goal != null) {
+    await c.env.DB.prepare(
+      "INSERT INTO health_goals (key, value) VALUES ('weight_goal', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value"
+    ).bind(String(weight_goal)).run()
+  }
+  return c.json({ success: true })
+})
+
+// ─── Health: Measurements ─────────────────────────────────────────────────────
+
+app.get('/health/measurements', async (c) => {
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM health_measurements ORDER BY date DESC LIMIT 50'
+  ).all()
+  return c.json(results)
+})
+
+app.post('/health/measurements', async (c) => {
+  const { date, chest, waist, hips, thigh, arm, calf, wrist } = await c.req.json()
+  if (!date) return c.json({ error: 'date required' }, 400)
+  const id = crypto.randomUUID()
+  await c.env.DB.prepare(
+    `INSERT INTO health_measurements (id, date, chest, waist, hips, thigh, arm, calf, wrist)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(date) DO UPDATE SET
+       chest=excluded.chest, waist=excluded.waist, hips=excluded.hips,
+       thigh=excluded.thigh, arm=excluded.arm, calf=excluded.calf, wrist=excluded.wrist`
+  ).bind(id, date, chest ?? null, waist ?? null, hips ?? null, thigh ?? null, arm ?? null, calf ?? null, wrist ?? null).run()
+  return c.json({ success: true })
+})
+
+app.delete('/health/measurements/:date', async (c) => {
+  await c.env.DB.prepare('DELETE FROM health_measurements WHERE date = ?').bind(c.req.param('date')).run()
+  return c.json({ success: true })
+})
+
+// ─── Health: Exercise ─────────────────────────────────────────────────────────
+
+app.get('/health/exercise', async (c) => {
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM health_exercise ORDER BY date DESC, created_at DESC LIMIT 100'
+  ).all()
+  return c.json(results)
+})
+
+app.post('/health/exercise', async (c) => {
+  const { date, type, duration, calories, note = '' } = await c.req.json()
+  if (!date || !type) return c.json({ error: 'date and type required' }, 400)
+  const id = crypto.randomUUID()
+  await c.env.DB.prepare(
+    'INSERT INTO health_exercise (id, date, type, duration, calories, note) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(id, date, type, duration ?? null, calories ?? null, note).run()
+  return c.json({ id, success: true })
+})
+
+app.delete('/health/exercise/:id', async (c) => {
+  await c.env.DB.prepare('DELETE FROM health_exercise WHERE id = ?').bind(c.req.param('id')).run()
+  return c.json({ success: true })
+})
+
 export const onRequest = handle(app)

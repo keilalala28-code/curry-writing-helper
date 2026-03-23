@@ -19,7 +19,7 @@ const NAV_ITEMS: { path: string; label: string; ownerOnly: boolean; external?: b
   { path: '/import', label: '📥 导入文章', ownerOnly: true },
   { path: '/framework', label: '🎬 故事框架', ownerOnly: false },
   { path: '/batch-analysis', label: '🤖 批量分析', ownerOnly: true },
-  { path: 'https://fitness-nutrition-4u8.pages.dev/', label: '💪 健康管理', ownerOnly: false, external: true },
+  { path: '/health', label: '💪 健康管理', ownerOnly: false },
 ]
 
 interface Props {
