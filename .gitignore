@@ -31,3 +31,13 @@ Thumbs.db
 
 # Claude
 .claude/
+
+# Node
+node_modules/
+cf-app/node_modules/
+dist/
+cf-app/dist/
+.wrangler/
+
+# Local scripts
+transform.js

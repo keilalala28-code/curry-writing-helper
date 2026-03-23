@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="100" fill="#9333ea"/>
+  <!-- Left page -->
+  <path d="M72 128C72 116 82 106 94 106H234V400H94C82 400 72 390 72 378V128Z" fill="#FF6B6B"/>
+  <!-- Right page -->
+  <path d="M440 128C440 116 430 106 418 106H278V400H418C430 400 440 390 440 378V128Z" fill="#FF8C69"/>
+  <!-- Spine -->
+  <rect x="232" y="106" width="48" height="294" fill="#D94F4F" rx="4"/>
+  <!-- Lines left -->
+  <line x1="100" y1="168" x2="222" y2="168" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+  <line x1="100" y1="210" x2="222" y2="210" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+  <line x1="100" y1="252" x2="200" y2="252" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.5"/>
+  <line x1="100" y1="294" x2="180" y2="294" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.35"/>
+  <!-- Lines right -->
+  <line x1="290" y1="168" x2="412" y2="168" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+  <line x1="290" y1="210" x2="412" y2="210" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+  <line x1="290" y1="252" x2="390" y2="252" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.5"/>
+  <line x1="290" y1="294" x2="370" y2="294" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.35"/>
+</svg>

@@ -1,0 +1,23 @@
+name = "carly-assistant"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "curry-db"
+database_id = "caf444d8-5718-4bed-b8a8-1c2af5814ade"
+
+[ai]
+binding = "AI"
+
+[vars]
+AUTH_USERNAME    = "carly"
+AUTH_PASSWORD    = "carly"
+VISITOR_USERNAME = "visitor"
+VISITOR_PASSWORD = "visitor123"
+AI_BASE_URL      = "https://llm.ai-nebula.com"
+AI_MODEL         = "claude-opus-4-5-20251101"
+
+# AI_API_KEY is set via Cloudflare dashboard as a secret
+# Run: npx wrangler pages secret put AI_API_KEY --project-name=carly-assistant
