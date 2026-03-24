@@ -10,7 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
 const NAV_ITEMS: { path: string; label: string; icon: string; ownerOnly: boolean; external?: boolean }[] = [
   { path: '/', label: '每日灵感', icon: '🎯', ownerOnly: false },
   { path: '/writing', label: '码字计划', icon: '✍️', ownerOnly: true },
-  { path: '/routine', label: '每日日程', icon: '📅', ownerOnly: false },
+  { path: '/routine', label: '个人规划', icon: '📅', ownerOnly: false },
   { path: '/media', label: '自媒体管理', icon: '📱', ownerOnly: false },
   { path: '/browse', label: '分类浏览', icon: '📂', ownerOnly: false },
   { path: '/search', label: '搜索文章', icon: '🔍', ownerOnly: false },

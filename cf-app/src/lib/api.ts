@@ -106,6 +106,33 @@ export interface ThemeResponse {
   liked: boolean
 }
 
+export interface MonthGoal {
+  id: string
+  year_month: string
+  title: string
+  category: string
+  status: 'todo' | 'doing' | 'done'
+  progress_note: string
+  sort_order: number
+}
+
+export interface YearGoal {
+  id: string
+  year: number
+  title: string
+  category: string
+  progress: number
+  quarter: string
+  description: string
+  sort_order: number
+}
+
+export interface YearHeatmapMonth {
+  month: string
+  pct: number
+  days: number
+}
+
 async function get<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
   const url = new URL(BASE + path, location.origin)
   if (params) {
@@ -199,6 +226,19 @@ export const api = {
     getCalendar: (year: number, month: number) =>
       get<{ year: number; month: number; days: CalendarDay[] }>('/routine/calendar', { year, month }),
   },
+  planning: {
+    getMonthGoals: (month: string) => get<MonthGoal[]>('/planning/month-goals', { month }),
+    createMonthGoal: (data: Partial<MonthGoal>) => post<{ id: string; success: boolean }>('/planning/month-goals', data),
+    updateMonthGoal: (id: string, data: Partial<MonthGoal>) => put<{ success: boolean }>(`/planning/month-goals/${id}`, data),
+    deleteMonthGoal: (id: string) => del(`/planning/month-goals/${id}`),
+    getYearGoals: (year: number) => get<YearGoal[]>('/planning/year-goals', { year }),
+    createYearGoal: (data: Partial<YearGoal>) => post<{ id: string; success: boolean }>('/planning/year-goals', data),
+    updateYearGoal: (id: string, data: Partial<YearGoal>) => put<{ success: boolean }>(`/planning/year-goals/${id}`, data),
+    deleteYearGoal: (id: string) => del(`/planning/year-goals/${id}`),
+    getNotes: (scope: string) => get<{ scope: string; notes: string }>('/planning/notes', { scope }),
+    saveNotes: (scope: string, notes: string) => put<{ success: boolean }>('/planning/notes', { scope, notes }),
+    getYearHeatmap: (year: number) => get<{ year: number; heatmap: YearHeatmapMonth[] }>('/planning/year-heatmap', { year }),
+  },
   health: {
     getWeight: (days?: number) => get<{ records: HealthWeight[]; goal: number | null }>('/health/weight', days ? { days } : undefined),
     saveWeight: (date: string, weight: number, note?: string) => post<{ success: boolean }>('/health/weight', { date, weight, note }),
@@ -210,6 +250,10 @@ export const api = {
     getExercise: () => get<HealthExercise[]>('/health/exercise'),
     saveExercise: (data: { date: string; type: string; duration?: number; calories?: number; note?: string }) => post<{ id: string; success: boolean }>('/health/exercise', data),
     deleteExercise: (id: string) => del(`/health/exercise/${id}`),
+  },
+  outline: {
+    generate: (data: { idea: string; perspective?: string }) =>
+      post<OutlineResult>('/generate-outline', data),
   },
   media: {
     getPlatforms: () => get<MediaPlatform[]>('/media/platforms'),
@@ -299,6 +343,16 @@ export interface HealthExercise {
   calories: number | null
   note: string
   created_at: number
+}
+
+export interface OutlineResult {
+  summary: string
+  structure: { qi: string; cheng: string; zhuan: string; he: string }
+  event_flow: { desire: string; obstacle: string; action: string; achieve: string }
+  characters: { protagonist: string; antagonist: string; bystanders: string }
+  emotion_elements: string
+  outline: { segment: string; setup: string; turning: string; emotion: string }[]
+  emotion_arc: { up: string; down: string }
 }
 
 export interface BadgeDef {

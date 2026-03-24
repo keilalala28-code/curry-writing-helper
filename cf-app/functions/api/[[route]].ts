@@ -1882,6 +1882,120 @@ app.get('/routine/calendar', async (c) => {
   return c.json({ year, month, days })
 })
 
+// ─── Planning: Month Goals ────────────────────────────────────────────────────
+
+app.get('/planning/month-goals', async (c) => {
+  const month = c.req.query('month') || new Date().toISOString().slice(0, 7)
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM month_goals WHERE year_month = ? ORDER BY sort_order ASC, rowid ASC'
+  ).bind(month).all()
+  return c.json(results)
+})
+
+app.post('/planning/month-goals', ownerOnly, async (c) => {
+  const { year_month, title, category = 'write', status = 'todo', progress_note = '' } = await c.req.json()
+  const id = crypto.randomUUID()
+  const { results: existing } = await c.env.DB.prepare(
+    'SELECT MAX(sort_order) as mo FROM month_goals WHERE year_month = ?'
+  ).bind(year_month).all()
+  const maxOrder = (existing[0] as { mo: number | null })?.mo ?? -1
+  await c.env.DB.prepare(
+    'INSERT INTO month_goals (id, year_month, title, category, status, progress_note, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, year_month, title, category, status, progress_note, maxOrder + 1).run()
+  return c.json({ id, success: true })
+})
+
+app.put('/planning/month-goals/:id', ownerOnly, async (c) => {
+  const id = c.req.param('id')
+  const { title, category, status, progress_note } = await c.req.json()
+  await c.env.DB.prepare(
+    'UPDATE month_goals SET title=?, category=?, status=?, progress_note=? WHERE id=?'
+  ).bind(title, category, status, progress_note ?? '', id).run()
+  return c.json({ success: true })
+})
+
+app.delete('/planning/month-goals/:id', ownerOnly, async (c) => {
+  const id = c.req.param('id')
+  await c.env.DB.prepare('DELETE FROM month_goals WHERE id = ?').bind(id).run()
+  return c.json({ success: true })
+})
+
+// ─── Planning: Year Goals ─────────────────────────────────────────────────────
+
+app.get('/planning/year-goals', async (c) => {
+  const year = parseInt(c.req.query('year') || String(new Date().getFullYear()))
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM year_goals WHERE year = ? ORDER BY sort_order ASC, rowid ASC'
+  ).bind(year).all()
+  return c.json(results)
+})
+
+app.post('/planning/year-goals', ownerOnly, async (c) => {
+  const { year, title, category = 'write', progress = 0, quarter = 'all', description = '' } = await c.req.json()
+  const id = crypto.randomUUID()
+  const { results: existing } = await c.env.DB.prepare(
+    'SELECT MAX(sort_order) as mo FROM year_goals WHERE year = ?'
+  ).bind(year).all()
+  const maxOrder = (existing[0] as { mo: number | null })?.mo ?? -1
+  await c.env.DB.prepare(
+    'INSERT INTO year_goals (id, year, title, category, progress, quarter, description, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, year, title, category, progress, quarter, description, maxOrder + 1).run()
+  return c.json({ id, success: true })
+})
+
+app.put('/planning/year-goals/:id', ownerOnly, async (c) => {
+  const id = c.req.param('id')
+  const { title, category, progress, quarter, description } = await c.req.json()
+  await c.env.DB.prepare(
+    'UPDATE year_goals SET title=?, category=?, progress=?, quarter=?, description=? WHERE id=?'
+  ).bind(title, category, progress ?? 0, quarter, description ?? '', id).run()
+  return c.json({ success: true })
+})
+
+app.delete('/planning/year-goals/:id', ownerOnly, async (c) => {
+  const id = c.req.param('id')
+  await c.env.DB.prepare('DELETE FROM year_goals WHERE id = ?').bind(id).run()
+  return c.json({ success: true })
+})
+
+// ─── Planning: Notes ──────────────────────────────────────────────────────────
+
+app.get('/planning/notes', async (c) => {
+  const scope = c.req.query('scope') || ''
+  const row = await c.env.DB.prepare('SELECT notes FROM plan_notes WHERE scope = ?').bind(scope).first<{ notes: string }>()
+  return c.json({ scope, notes: row?.notes ?? '' })
+})
+
+app.put('/planning/notes', ownerOnly, async (c) => {
+  const { scope, notes } = await c.req.json()
+  await c.env.DB.prepare(
+    'INSERT INTO plan_notes (scope, notes) VALUES (?, ?) ON CONFLICT(scope) DO UPDATE SET notes=excluded.notes'
+  ).bind(scope, notes ?? '').run()
+  return c.json({ success: true })
+})
+
+// ─── Planning: Year Heatmap ───────────────────────────────────────────────────
+
+app.get('/planning/year-heatmap', async (c) => {
+  const year = parseInt(c.req.query('year') || String(new Date().getFullYear()))
+  const totalItems = await c.env.DB.prepare(
+    'SELECT COUNT(*) as cnt FROM routine_preset WHERE enabled = 1'
+  ).first<{ cnt: number }>()
+  const total = totalItems?.cnt ?? 1
+  const { results } = await c.env.DB.prepare(
+    `SELECT substr(date,1,7) as month, AVG(CAST(completed AS REAL)) as avg_done, COUNT(DISTINCT date) as days
+     FROM routine_daily_log WHERE date LIKE ? GROUP BY month`
+  ).bind(`${year}-%`).all()
+  const rows = results as { month: string; avg_done: number; days: number }[]
+  const heatmap: { month: string; pct: number; days: number }[] = []
+  for (let m = 1; m <= 12; m++) {
+    const key = `${year}-${String(m).padStart(2, '0')}`
+    const row = rows.find(r => r.month === key)
+    heatmap.push({ month: key, pct: row ? Math.round((row.avg_done / total) * 100) : 0, days: row?.days ?? 0 })
+  }
+  return c.json({ year, heatmap })
+})
+
 // ─── Media: Platforms ─────────────────────────────────────────────────────────
 
 app.get('/media/platforms', async (c) => {
@@ -2180,6 +2294,117 @@ app.post('/health/exercise', async (c) => {
 app.delete('/health/exercise/:id', async (c) => {
   await c.env.DB.prepare('DELETE FROM health_exercise WHERE id = ?').bind(c.req.param('id')).run()
   return c.json({ success: true })
+})
+
+// ─── 点子生成细纲 ──────────────────────────────────────────────────────────────
+
+app.post('/generate-outline', async (c) => {
+  const { idea, perspective = '女主视角' } = await c.req.json()
+  if (!idea) return c.json({ error: '请输入你的点子' }, 400)
+
+  const baseUrl = c.env.AI_BASE_URL || 'https://api.anthropic.com'
+  const apiKey  = c.env.AI_API_KEY
+  const model   = c.env.AI_MODEL || 'claude-opus-4-5-20251101'
+
+  const prompt = `你是一个擅长情绪结构的中文短篇网文策划。请根据用户提供的点子，生成一份对标爆款逻辑的情绪结构细纲。
+
+爆款三要素：情绪（每个场景有清晰情绪目标）× 节奏（铺垫与爆发交替）× 创新（人设或情节有差异化）
+
+用户点子（可能很模糊）：「${idea}」
+视角：${perspective}
+
+参考示例结构（青梅竹马故事）：
+- 一句话梗概：青梅竹马的老公一直爱着别人，女主利用男主资源的同时报复渣男和小三的故事
+- 起：女主发现青梅竹马的老公心里有别人
+- 承：女主没有挑明，一边利用渣男的资源，一边报复渣男和小三
+- 转：女主摊牌
+- 合：渣男追悔莫及，小三爱而不得，女主事业有成并且收获了新的爱情
+- 欲望：女主权衡利弊，决定利用渣男的资源搞事业，同时报复渣男
+- 阻碍：①小三时不时当面挑衅\n②渣男一边跟情妹妹暧昧不清，一边向女主表深情
+- 前段铺垫：①反派人设：老公爱的女人是小三的女儿\n②不公平伤害：老公维护小三
+- 前段转折点：女主知道一切
+- 情绪折线上行：1.女主清醒，利用渣男价值搞事业\n2.渣男发现女主的爱后，各种后悔卑微示好
+
+请按照同样的逻辑为用户的点子生成细纲。
+
+返回JSON（不要有其他内容）：
+{
+  "summary": "一句话梗概（30字内，有冲突张力的钩子）",
+  "structure": {
+    "qi": "起——开篇情境，直接进入情绪现场（60字内）",
+    "cheng": "承——矛盾激化，主角的应对策略（60字内）",
+    "zhuan": "转——核心反转或关键决裂（60字内）",
+    "he": "合——结局与余韵，情绪落地（60字内）"
+  },
+  "event_flow": {
+    "desire": "欲望——主角真正想要的（40字内）",
+    "obstacle": "阻碍——主要障碍（用①②分点，80字内）",
+    "action": "行动——主角的应对策略（用①②分点，80字内）",
+    "achieve": "达成——最终结果，可加【额外收获】（60字内）"
+  },
+  "characters": {
+    "protagonist": "主角势力（人物名及身份关系，30字内）",
+    "antagonist": "反派势力（人物名，20字内）",
+    "bystanders": "围观群众（人物名，20字内，无则填「无」）"
+  },
+  "emotion_elements": "情绪点要素与转折点（用1.2.分点列举，100字内）",
+  "outline": [
+    {
+      "segment": "前段",
+      "setup": "铺垫——用①②③详述人物处境和矛盾埋设（100字内）",
+      "turning": "转折点——让局势开始偏离的那一刻（60字内）",
+      "emotion": "情绪点——用①②③列出读者此时的情绪反应（80字内）"
+    },
+    {
+      "segment": "中段",
+      "setup": "铺垫——用①②③详述矛盾深化过程（100字内）",
+      "turning": "转折点——全文最大的情节反转（60字内）",
+      "emotion": "情绪点——用①②③列出（80字内）"
+    },
+    {
+      "segment": "后段",
+      "setup": "铺垫——用①②③详述真相揭露前的最后压力（100字内）",
+      "turning": "转折点——真相揭露或情感决裂/和解（60字内）",
+      "emotion": "情绪点——用①②③列出结局情绪（80字内）"
+    }
+  ],
+  "emotion_arc": {
+    "up": "上行阶段主要有：\n1.xxx\n2.xxx（列举2-3个让读者情绪上行的节点）",
+    "down": "下行阶段主要有：\n1.xxx\n2.xxx（列举2-3个让读者情绪下行的节点）"
+  }
+}
+
+【JSON格式注意事项】
+- 所有字符串值中的换行用 \\n 表示，不得包含真实换行符
+- 字符串内禁止使用英文双引号，改用中文引号「」
+- 不要在JSON之外输出任何内容`
+
+  try {
+    const res = await fetch(`${baseUrl}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.text()
+      return c.json({ error: `AI API 错误: ${res.status}`, detail: err }, 502)
+    }
+
+    const data = await res.json() as { content: { type: string; text: string }[] }
+    const raw = data.content?.find(b => b.type === 'text')?.text || ''
+    try { return c.json(parseAiJson(raw)) } catch (e) { return c.json({ error: `解析失败: ${(e as Error).message}`, raw }, 502) }
+  } catch (e) {
+    return c.json({ error: String(e) }, 502)
+  }
 })
 
 export const onRequest = handle(app)
