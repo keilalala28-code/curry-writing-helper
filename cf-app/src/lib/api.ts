@@ -14,6 +14,11 @@ export interface MediaPlatform {
   updated_at: number
 }
 
+export interface MediaTodo {
+  text: string
+  done: boolean
+}
+
 export interface MediaContent {
   id: string
   title: string
@@ -22,6 +27,9 @@ export interface MediaContent {
   publish_date: string
   publish_note: string
   likes: number
+  todos: MediaTodo[]
+  start_date: string
+  end_date: string
   created_at: number
   updated_at: number
 }
@@ -124,6 +132,15 @@ export interface YearGoal {
   progress: number
   quarter: string
   description: string
+  sort_order: number
+}
+
+export interface WeekGoal {
+  id: string
+  year: number
+  week: number
+  title: string
+  done: boolean
   sort_order: number
 }
 
@@ -238,6 +255,10 @@ export const api = {
     getNotes: (scope: string) => get<{ scope: string; notes: string }>('/planning/notes', { scope }),
     saveNotes: (scope: string, notes: string) => put<{ success: boolean }>('/planning/notes', { scope, notes }),
     getYearHeatmap: (year: number) => get<{ year: number; heatmap: YearHeatmapMonth[] }>('/planning/year-heatmap', { year }),
+    getWeekGoals: (year: number, week: number) => get<WeekGoal[]>('/planning/week-goals', { year, week }),
+    createWeekGoal: (data: { year: number; week: number; title: string }) => post<{ id: string; success: boolean }>('/planning/week-goals', data),
+    updateWeekGoal: (id: string, data: Partial<WeekGoal>) => put<{ success: boolean }>(`/planning/week-goals/${id}`, data),
+    deleteWeekGoal: (id: string) => del(`/planning/week-goals/${id}`),
   },
   health: {
     getWeight: (days?: number) => get<{ records: HealthWeight[]; goal: number | null }>('/health/weight', days ? { days } : undefined),
@@ -254,6 +275,13 @@ export const api = {
   outline: {
     generate: (data: { idea: string; perspective?: string }) =>
       post<OutlineResult>('/generate-outline', data),
+  },
+  diary: {
+    getEntries: (date: string) => get<DiaryEntry[]>('/diary/entries', { date }),
+    saveEntry: (data: { date: string; year: number; content?: string; wish_content?: string; mood?: string; weather?: string }) =>
+      put<{ success: boolean }>('/diary/entry', data),
+    getCalendar: (year: number) => get<string[]>('/diary/calendar', { year }),
+    getStats: () => get<{ total_entries: number; current_year_days: number; recent: { date: string; year: number; preview: string }[] }>('/diary/stats'),
   },
   media: {
     getPlatforms: () => get<MediaPlatform[]>('/media/platforms'),
@@ -353,6 +381,16 @@ export interface OutlineResult {
   emotion_elements: string
   outline: { segment: string; setup: string; turning: string; emotion: string }[]
   emotion_arc: { up: string; down: string }
+}
+
+export interface DiaryEntry {
+  date: string
+  year: number
+  content: string
+  wish_content: string
+  mood: string
+  weather: string
+  updated_at: number
 }
 
 export interface BadgeDef {

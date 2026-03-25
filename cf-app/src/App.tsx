@@ -3,18 +3,11 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Home from './pages/Home'
-import Browse from './pages/Browse'
-import Search from './pages/Search'
 import Detail from './pages/Detail'
-import Tags from './pages/Tags'
-import Stats from './pages/Stats'
-import Import from './pages/Import'
-import Framework from './pages/Framework'
-import BatchAnalysis from './pages/BatchAnalysis'
-import Writing from './pages/Writing'
-import Routine from './pages/Routine'
 import Media from './pages/Media'
-import Health from './pages/Health'
+import WritingHub from './pages/WritingHub'
+import DailyHub from './pages/DailyHub'
+import FiveYearDiary from './pages/FiveYearDiary'
 import { checkAuth } from './lib/auth'
 import { useTheme } from './lib/theme'
 
@@ -42,18 +35,11 @@ export default function App() {
     <Layout onLogout={() => { setAuthed(false); setRole('') }} dark={dark} onToggleTheme={toggle} role={role}>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/browse" element={<Browse />} />
-        <Route path="/search" element={<Search />} />
         <Route path="/articles/:id" element={<Detail />} />
-        <Route path="/tags" element={<Tags />} />
-        <Route path="/stats" element={<Stats />} />
-        <Route path="/import" element={<Import />} />
-        <Route path="/framework" element={<Framework />} />
-        <Route path="/batch-analysis" element={<BatchAnalysis />} />
-        <Route path="/writing" element={<Writing />} />
-        <Route path="/routine" element={<Routine />} />
+        <Route path="/write" element={<WritingHub />} />
+        <Route path="/daily" element={<DailyHub />} />
         <Route path="/media" element={<Media />} />
-        <Route path="/health" element={<Health />} />
+        <Route path="/diary" element={<FiveYearDiary />} />
       </Routes>
     </Layout>
   )

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",
+    "exceljs": "^4.4.0",
     "hono": "^4.4.0",
     "jsonrepair": "^3.13.3",
     "react": "^18.3.0",

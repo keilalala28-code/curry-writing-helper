@@ -9,18 +9,10 @@ interface BeforeInstallPromptEvent extends Event {
 
 const NAV_ITEMS: { path: string; label: string; icon: string; ownerOnly: boolean; external?: boolean }[] = [
   { path: '/', label: '每日灵感', icon: '🎯', ownerOnly: false },
-  { path: '/writing', label: '码字计划', icon: '✍️', ownerOnly: true },
-  { path: '/routine', label: '个人规划', icon: '📅', ownerOnly: false },
-  { path: '/media', label: '自媒体管理', icon: '📱', ownerOnly: false },
-  { path: '/browse', label: '分类浏览', icon: '📂', ownerOnly: false },
-  { path: '/search', label: '搜索文章', icon: '🔍', ownerOnly: false },
-  { path: '/tags', label: '标签管理', icon: '🏷️', ownerOnly: false },
-  { path: '/stats', label: '数据统计', icon: '📊', ownerOnly: false },
-  { path: '/import', label: '导入文章', icon: '📥', ownerOnly: true },
-  { path: '/framework', label: '故事框架', icon: '🎬', ownerOnly: false },
-  { path: '/idea-outline', label: '生成细纲', icon: '💡', ownerOnly: false },
-  { path: '/batch-analysis', label: '批量分析', icon: '🤖', ownerOnly: true },
-  { path: '/health', label: '健康管理', icon: '💪', ownerOnly: false },
+  { path: '/write', label: '码字', icon: '✍️', ownerOnly: false },
+  { path: '/daily', label: '日常', icon: '📅', ownerOnly: false },
+  { path: '/media', label: '自媒体', icon: '📱', ownerOnly: false },
+  { path: '/diary', label: '五年日记', icon: '📓', ownerOnly: false },
 ]
 
 interface Props {
@@ -168,7 +160,7 @@ export default function Layout({ children, onLogout, dark, onToggleTheme, role }
         <div className="p-4 border-b border-gray-100 dark:border-gray-700">
           <h1 className="text-xl font-bold text-primary">🍛 咖喱小助手</h1>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-            写作资源管理库
+            记录生活
             {!isOwner && <span className="ml-1 text-blue-400">访客</span>}
           </p>
         </div>
@@ -223,7 +215,7 @@ export default function Layout({ children, onLogout, dark, onToggleTheme, role }
             <div>
               <h1 className="text-lg font-bold text-primary">🍛 咖喱小助手</h1>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                写作资源管理库
+                记录生活
                 {!isOwner && <span className="ml-1 text-blue-400">访客</span>}
               </p>
             </div>

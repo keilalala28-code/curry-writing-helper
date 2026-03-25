@@ -1996,6 +1996,48 @@ app.get('/planning/year-heatmap', async (c) => {
   return c.json({ year, heatmap })
 })
 
+// ─── Planning: Week Goals ────────────────────────────────────────────────────
+
+app.get('/planning/week-goals', async (c) => {
+  const year = parseInt(c.req.query('year') || String(new Date().getFullYear()))
+  const week = parseInt(c.req.query('week') || '1')
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM week_goals WHERE year=? AND week=? ORDER BY sort_order, created_at'
+  ).bind(year, week).all()
+  return c.json((results as any[]).map(r => ({ ...r, done: !!r.done })))
+})
+
+app.post('/planning/week-goals', ownerOnly, async (c) => {
+  const { year, week, title } = await c.req.json()
+  if (!title) return c.json({ error: 'title required' }, 400)
+  const id = crypto.randomUUID()
+  const { results } = await c.env.DB.prepare('SELECT MAX(sort_order) as mx FROM week_goals WHERE year=? AND week=?').bind(year, week).all()
+  const maxOrder = (results[0] as any)?.mx ?? 0
+  await c.env.DB.prepare(
+    'INSERT INTO week_goals (id, year, week, title, sort_order) VALUES (?, ?, ?, ?, ?)'
+  ).bind(id, year, week, title, maxOrder + 1).run()
+  return c.json({ id, success: true })
+})
+
+app.put('/planning/week-goals/:id', ownerOnly, async (c) => {
+  const id = c.req.param('id')
+  const { title, done, sort_order } = await c.req.json()
+  const sets: string[] = []
+  const vals: any[] = []
+  if (title !== undefined) { sets.push('title=?'); vals.push(title) }
+  if (done !== undefined) { sets.push('done=?'); vals.push(done ? 1 : 0) }
+  if (sort_order !== undefined) { sets.push('sort_order=?'); vals.push(sort_order) }
+  if (sets.length === 0) return c.json({ success: true })
+  vals.push(id)
+  await c.env.DB.prepare(`UPDATE week_goals SET ${sets.join(', ')} WHERE id=?`).bind(...vals).run()
+  return c.json({ success: true })
+})
+
+app.delete('/planning/week-goals/:id', ownerOnly, async (c) => {
+  await c.env.DB.prepare('DELETE FROM week_goals WHERE id=?').bind(c.req.param('id')).run()
+  return c.json({ success: true })
+})
+
 // ─── Media: Platforms ─────────────────────────────────────────────────────────
 
 app.get('/media/platforms', async (c) => {
@@ -2019,25 +2061,30 @@ app.get('/media/contents', async (c) => {
   const { results } = status
     ? await c.env.DB.prepare('SELECT * FROM media_contents WHERE status=? ORDER BY created_at DESC').bind(status).all()
     : await c.env.DB.prepare('SELECT * FROM media_contents ORDER BY created_at DESC').all()
-  return c.json(results)
+  // Parse todos JSON
+  const parsed = (results as any[]).map(r => ({
+    ...r,
+    todos: r.todos ? JSON.parse(r.todos) : []
+  }))
+  return c.json(parsed)
 })
 
 app.post('/media/contents', ownerOnly, async (c) => {
-  const { title, status = 'idea', platform = '', publish_date = '', publish_note = '', likes = 0 } = await c.req.json()
+  const { title, status = 'idea', platform = '', publish_date = '', publish_note = '', likes = 0, todos = [], start_date = '', end_date = '' } = await c.req.json()
   if (!title) return c.json({ error: 'title required' }, 400)
   const id = crypto.randomUUID()
   await c.env.DB.prepare(
-    'INSERT INTO media_contents (id, title, status, platform, publish_date, publish_note, likes) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).bind(id, title, status, platform, publish_date, publish_note, likes).run()
+    'INSERT INTO media_contents (id, title, status, platform, publish_date, publish_note, likes, todos, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, title, status, platform, publish_date, publish_note, likes, JSON.stringify(todos), start_date, end_date).run()
   return c.json({ id, success: true })
 })
 
 app.put('/media/contents/:id', ownerOnly, async (c) => {
   const id = c.req.param('id')
-  const { title, status, platform, publish_date, publish_note, likes } = await c.req.json()
+  const { title, status, platform, publish_date, publish_note, likes, todos, start_date, end_date } = await c.req.json()
   await c.env.DB.prepare(
-    'UPDATE media_contents SET title=?, status=?, platform=?, publish_date=?, publish_note=?, likes=?, updated_at=unixepoch() WHERE id=?'
-  ).bind(title, status, platform ?? '', publish_date ?? '', publish_note ?? '', likes ?? 0, id).run()
+    'UPDATE media_contents SET title=?, status=?, platform=?, publish_date=?, publish_note=?, likes=?, todos=?, start_date=?, end_date=?, updated_at=unixepoch() WHERE id=?'
+  ).bind(title, status, platform ?? '', publish_date ?? '', publish_note ?? '', likes ?? 0, JSON.stringify(todos ?? []), start_date ?? '', end_date ?? '', id).run()
   return c.json({ success: true })
 })
 
@@ -2302,9 +2349,88 @@ app.post('/generate-outline', async (c) => {
   const { idea, perspective = '女主视角' } = await c.req.json()
   if (!idea) return c.json({ error: '请输入你的点子' }, 400)
 
+  const db = c.env.DB
   const baseUrl = c.env.AI_BASE_URL || 'https://api.anthropic.com'
   const apiKey  = c.env.AI_API_KEY
   const model   = c.env.AI_MODEL || 'claude-opus-4-5-20251101'
+
+  // ── 从文章库提取参考：10篇 hooks 学爆点规律 + 2篇最相关正文节选示范情节密度 ─
+  type ArtRow = { id: string; title: string; content: string }
+
+  const keywords = extractKeywords(idea)
+  let matchedIds: string[] = []
+  let randomIds: string[] = []
+
+  if (keywords.length > 0) {
+    const conds: string[] = []
+    const ps: string[] = []
+    for (const kw of keywords) {
+      conds.push('EXISTS (SELECT 1 FROM article_hooks ah2 WHERE ah2.article_id = a.id AND ah2.hook LIKE ?)')
+      ps.push(`%${kw}%`)
+      conds.push('a.category LIKE ?')
+      ps.push(`%${kw}%`)
+      conds.push('EXISTS (SELECT 1 FROM article_tags at2 WHERE at2.article_id = a.id AND at2.tag LIKE ?)')
+      ps.push(`%${kw}%`)
+      conds.push('a.title LIKE ?')
+      ps.push(`%${kw}%`)
+    }
+    const { results } = await db.prepare(
+      `SELECT a.id FROM articles a WHERE (${conds.join(' OR ')}) ORDER BY RANDOM() LIMIT 10`
+    ).bind(...ps).all()
+    matchedIds = (results as { id: string }[]).map(r => r.id)
+  }
+
+  // 不足 10 篇随机补足
+  if (matchedIds.length < 10) {
+    const excl = matchedIds.length > 0
+      ? `WHERE id NOT IN (${matchedIds.map(() => '?').join(',')})`
+      : ''
+    const { results } = await db.prepare(
+      `SELECT id FROM articles ${excl} ORDER BY RANDOM() LIMIT ?`
+    ).bind(...matchedIds, 10 - matchedIds.length).all()
+    randomIds = (results as { id: string }[]).map(r => r.id)
+  }
+
+  const allIds = [...matchedIds, ...randomIds].slice(0, 10)
+  // 关键词匹配到的前 2 篇用于正文节选（最相关），其余只取 hooks
+  const excerptIds = matchedIds.slice(0, 2)
+
+  let refSection = ''
+  if (allIds.length > 0) {
+    const ph10 = allIds.map(() => '?').join(',')
+    const [artRes, hookRes] = await Promise.all([
+      db.prepare(
+        `SELECT id, title, content FROM articles WHERE id IN (${ph10})`
+      ).bind(...allIds).all(),
+      db.prepare(
+        `SELECT article_id, hook FROM article_hooks WHERE article_id IN (${ph10}) AND hook != '待分析'`
+      ).bind(...allIds).all(),
+    ])
+
+    const hookMap: Record<string, string[]> = {}
+    for (const r of hookRes.results as { article_id: string; hook: string }[]) {
+      if (!hookMap[r.article_id]) hookMap[r.article_id] = []
+      hookMap[r.article_id].push(r.hook)
+    }
+
+    const arts = artRes.results as ArtRow[]
+    const allHooks = [...new Set(arts.flatMap(a => hookMap[a.id] || []))]
+
+    // 正文节选：最相关的 2 篇，每篇取 300 字，展示情节密度
+    const excerptParts = arts
+      .filter(a => excerptIds.includes(a.id) && a.content)
+      .map(a => `《${a.title}》节选：\n${a.content.slice(0, 300)}`)
+      .join('\n\n')
+
+    refSection = `
+【文章库参考（${arts.length}篇，仅学习规律，情节必须全部原创）】
+
+① 爆点组合规律（${arts.length}篇文章的爆点标签，反映读者偏好）：
+${allHooks.join('、')}
+${excerptParts ? `\n② 情节密度示例（最相关${excerptIds.length > 0 ? excerptIds.length : 2}篇正文节选，学习「每句话都有具体事件」的写法）：\n${excerptParts}` : ''}
+
+学习要点：用①的爆点逻辑 + ②的情节密度，写出全新情节。`
+  }
 
   const prompt = `你是一个擅长情绪结构的中文短篇网文策划。请根据用户提供的点子，生成一份对标爆款逻辑的情绪结构细纲。
 
@@ -2312,20 +2438,23 @@ app.post('/generate-outline', async (c) => {
 
 用户点子（可能很模糊）：「${idea}」
 视角：${perspective}
+${refSection}
 
-参考示例结构（青梅竹马故事）：
-- 一句话梗概：青梅竹马的老公一直爱着别人，女主利用男主资源的同时报复渣男和小三的故事
-- 起：女主发现青梅竹马的老公心里有别人
-- 承：女主没有挑明，一边利用渣男的资源，一边报复渣男和小三
-- 转：女主摊牌
-- 合：渣男追悔莫及，小三爱而不得，女主事业有成并且收获了新的爱情
-- 欲望：女主权衡利弊，决定利用渣男的资源搞事业，同时报复渣男
-- 阻碍：①小三时不时当面挑衅\n②渣男一边跟情妹妹暧昧不清，一边向女主表深情
-- 前段铺垫：①反派人设：老公爱的女人是小三的女儿\n②不公平伤害：老公维护小三
-- 前段转折点：女主知道一切
-- 情绪折线上行：1.女主清醒，利用渣男价值搞事业\n2.渣男发现女主的爱后，各种后悔卑微示好
+【铺垫情节写法要求——核心】
+铺垫是细纲最重要的部分，必须写得具体、有画面感，像真正在写故事大纲：
+- 每个铺垫阶段至少列出5-8个具体情节，用①②③④⑤⑥⑦⑧标注
+- 每个情节要有具体的人物行为、场景或对话要点（不是泛泛描述，是具体发生了什么事）
+- 第一阶段铺垫：专门用来大虐特虐主角，让主角承受伤害、委屈、压制，绝对不要写反击或觉醒，只写被虐
+- 第二阶段铺垫：继续压制主角，矛盾加深，伤害升级，同样不写反击
+- 第三阶段铺垫：反派/男主开始发现真相、开始思念/离不开主角、开始后悔，局势悄悄反转，为情绪点③蓄力
 
-请按照同样的逻辑为用户的点子生成细纲。
+参考铺垫示例（某虐心故事第二阶段，展示详细程度）：
+①数年后，女主改头换面，成为医疗集团高管
+②男主问为什么不联系，我被碰瓷男主却不接电话（说女二胃痛）
+③我神色平静，不哭不闹，男主觉得我变了，女二打给男主说在商场东西太多，男主说不去找别人，男主拒了又去了
+④我表示理解，我拿到了驻外翻译资格，说不会和老公一起，已经交了离婚申请，对面很诧异
+⑤男主又接到女二电话，男主这次没走（过去男主每次都要飞十几个小时去陪女二）；男主让她别挑唆多次当众羞辱「疯女人母亲」；女主次次没有（过去女主每次都要飞十几个小时去陪女二）
+⑥女主回家收东西，男主出院，精心准备结婚纪念日；女二推我，男主先救女二；男主留在了医院，说女二受了惊吓
 
 返回JSON（不要有其他内容）：
 {
@@ -2351,26 +2480,26 @@ app.post('/generate-outline', async (c) => {
   "outline": [
     {
       "segment": "前段",
-      "setup": "铺垫——用①②③详述人物处境和矛盾埋设（100字内）",
+      "setup": "铺垫情节（第一阶段）——专门虐主角，不写反击。用①②③④⑤逐条列出5个以上具体情节，每条写清楚发生了什么、谁做了什么、造成什么伤害（每条20-40字）",
       "turning": "转折点——让局势开始偏离的那一刻（60字内）",
-      "emotion": "情绪点——用①②③列出读者此时的情绪反应（80字内）"
+      "emotion": "情绪点①——用①②③列出读者此时的情绪反应（80字内）"
     },
     {
       "segment": "中段",
-      "setup": "铺垫——用①②③详述矛盾深化过程（100字内）",
+      "setup": "铺垫情节（第二阶段）——继续压制主角，伤害升级，不写反击。用①②③④⑤⑥逐条列出6个以上具体情节，每条写清楚发生了什么（每条20-40字）",
       "turning": "转折点——全文最大的情节反转（60字内）",
-      "emotion": "情绪点——用①②③列出（80字内）"
+      "emotion": "情绪点②——用①②③列出（80字内）"
     },
     {
       "segment": "后段",
-      "setup": "铺垫——用①②③详述真相揭露前的最后压力（100字内）",
+      "setup": "铺垫情节（第三阶段）——反派/男主开始发现真相、思念主角、意识到失去。用①②③④⑤逐条列出5个以上具体情节，写男主的心理转变和行动（每条20-40字）",
       "turning": "转折点——真相揭露或情感决裂/和解（60字内）",
-      "emotion": "情绪点——用①②③列出结局情绪（80字内）"
+      "emotion": "情绪点③——用①②③列出结局情绪（80字内）"
     }
   ],
   "emotion_arc": {
-    "up": "上行阶段主要有：\n1.xxx\n2.xxx（列举2-3个让读者情绪上行的节点）",
-    "down": "下行阶段主要有：\n1.xxx\n2.xxx（列举2-3个让读者情绪下行的节点）"
+    "up": "上行阶段主要有：\\n1.xxx\\n2.xxx（列举2-3个让读者情绪上行的节点）",
+    "down": "下行阶段主要有：\\n1.xxx\\n2.xxx（列举2-3个让读者情绪下行的节点）"
   }
 }
 
@@ -2389,7 +2518,7 @@ app.post('/generate-outline', async (c) => {
       },
       body: JSON.stringify({
         model,
-        max_tokens: 4096,
+        max_tokens: 8192,
         messages: [{ role: 'user', content: prompt }],
       }),
     })
@@ -2405,6 +2534,68 @@ app.post('/generate-outline', async (c) => {
   } catch (e) {
     return c.json({ error: String(e) }, 502)
   }
+})
+
+// ─── Five-Year Diary ────────────────────────────────────────────────────────
+
+app.get('/diary/entries', async (c) => {
+  const db = (c.env as Env).DB
+  const date = c.req.query('date') // MM-DD
+  if (!date) return c.json({ error: 'date required' }, 400)
+  const rows = await db.prepare(
+    'SELECT date, year, content, wish_content, mood, weather, updated_at FROM five_year_diary WHERE date = ? ORDER BY year'
+  ).bind(date).all()
+  return c.json(rows.results)
+})
+
+app.put('/diary/entry', async (c) => {
+  const db = (c.env as Env).DB
+  const body = await c.req.json() as {
+    date: string; year: number; content?: string; wish_content?: string; mood?: string; weather?: string
+  }
+  const { date, year, content = '', wish_content = '', mood = '', weather = '' } = body
+  if (!date || !year) return c.json({ error: 'date and year required' }, 400)
+  await db.prepare(
+    `INSERT INTO five_year_diary (date, year, content, wish_content, mood, weather, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, unixepoch())
+     ON CONFLICT(date, year) DO UPDATE SET
+       content = excluded.content,
+       wish_content = excluded.wish_content,
+       mood = excluded.mood,
+       weather = excluded.weather,
+       updated_at = unixepoch()`
+  ).bind(date, year, content, wish_content, mood, weather).run()
+  return c.json({ success: true })
+})
+
+app.get('/diary/calendar', async (c) => {
+  const db = (c.env as Env).DB
+  const year = parseInt(c.req.query('year') || '0')
+  if (!year) return c.json({ error: 'year required' }, 400)
+  const rows = await db.prepare(
+    `SELECT date FROM five_year_diary WHERE year = ? AND (content != '' OR wish_content != '') ORDER BY date`
+  ).bind(year).all()
+  return c.json((rows.results as { date: string }[]).map(r => r.date))
+})
+
+app.get('/diary/stats', async (c) => {
+  const db = (c.env as Env).DB
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const total = await db.prepare(
+    `SELECT COUNT(DISTINCT date || '-' || year) as cnt FROM five_year_diary WHERE content != '' OR wish_content != ''`
+  ).first<{ cnt: number }>()
+  const currentYearDays = await db.prepare(
+    `SELECT COUNT(*) as cnt FROM five_year_diary WHERE year = ? AND content != ''`
+  ).bind(currentYear).first<{ cnt: number }>()
+  const recent = await db.prepare(
+    `SELECT date, year, substr(content,1,30) as preview FROM five_year_diary WHERE content != '' ORDER BY updated_at DESC LIMIT 5`
+  ).all()
+  return c.json({
+    total_entries: total?.cnt ?? 0,
+    current_year_days: currentYearDays?.cnt ?? 0,
+    recent: recent.results,
+  })
 })
 
 export const onRequest = handle(app)

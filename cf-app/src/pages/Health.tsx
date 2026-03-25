@@ -41,8 +41,10 @@ export default function Health() {
   const [wDate, setWDate] = useState(today())
   const [wValue, setWValue] = useState('')
   const [wNote, setWNote] = useState('')
-  const [wGoalInput, setWGoalInput] = useState('')
   const [wSaving, setWSaving] = useState(false)
+  const [showGoalModal, setShowGoalModal] = useState(false)
+  const [wGoalInput, setWGoalInput] = useState('')
+  const [goalSaving, setGoalSaving] = useState(false)
 
   // Measurement state
   const [measurements, setMeasurements] = useState<HealthMeasurement[]>([])
@@ -101,11 +103,20 @@ export default function Health() {
     setWSaving(true)
     try {
       await api.health.saveWeight(wDate, parseFloat(wValue), wNote)
-      if (wGoalInput) await api.health.saveGoal(parseFloat(wGoalInput))
       await loadWeight()
       setShowWModal(false)
       setWValue(''); setWNote('')
     } finally { setWSaving(false) }
+  }
+
+  const handleSaveGoal = async () => {
+    if (!wGoalInput) return
+    setGoalSaving(true)
+    try {
+      await api.health.saveGoal(parseFloat(wGoalInput))
+      await loadWeight()
+      setShowGoalModal(false)
+    } finally { setGoalSaving(false) }
   }
 
   const handleDeleteWeight = async (date: string) => {
@@ -224,7 +235,7 @@ export default function Health() {
               </div>
               <div className="text-xs mt-1 text-gray-400">{monthDiff !== null && monthDiff < 0 ? '持续下降中 💪' : monthDiff !== null && monthDiff > 0 ? '有点涨了' : '暂无数据'}</div>
             </div>
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center relative group">
               <div className="text-xs text-gray-400 mb-1">目标体重</div>
               <div className="text-3xl font-bold text-gray-800 dark:text-gray-100">
                 {goal ?? '—'}<span className="text-sm text-gray-400 font-normal"> kg</span>
@@ -232,6 +243,10 @@ export default function Health() {
               <div className="text-xs mt-1 text-gray-400">
                 {goal && latestWeight ? `还差 ${Math.abs(latestWeight.weight - goal).toFixed(1)} kg` : '未设置目标'}
               </div>
+              <button
+                onClick={() => { setWGoalInput(goal ? String(goal) : ''); setShowGoalModal(true) }}
+                className="absolute top-2 right-2 text-xs text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+              >✎</button>
             </div>
           </div>
 
@@ -434,17 +449,33 @@ export default function Health() {
                 <input type="text" value={wNote} onChange={e => setWNote(e.target.value)} placeholder="晨起空腹、聚餐后…"
                   className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:border-primary" />
               </div>
-              <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">目标体重 kg（可选）</label>
-                <input type="number" step="0.1" value={wGoalInput} onChange={e => setWGoalInput(e.target.value)} placeholder="例：54.0"
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:border-primary" />
-              </div>
             </div>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setShowWModal(false)} className="flex-1 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-lg py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
               <button onClick={handleSaveWeight} disabled={wSaving || !wValue}
                 className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-medium hover:opacity-90 disabled:opacity-40">
                 {wSaving ? '保存中…' : '保存'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== 设置目标体重弹窗 ===== */}
+      {showGoalModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowGoalModal(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-72 shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-4">🎯 设置目标体重</h3>
+            <div>
+              <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">目标体重（kg）</label>
+              <input type="number" step="0.1" value={wGoalInput} onChange={e => setWGoalInput(e.target.value)} placeholder="例：54.0" autoFocus
+                className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:border-primary" />
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setShowGoalModal(false)} className="flex-1 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-lg py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
+              <button onClick={handleSaveGoal} disabled={goalSaving || !wGoalInput}
+                className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-medium hover:opacity-90 disabled:opacity-40">
+                {goalSaving ? '保存中…' : '保存'}
               </button>
             </div>
           </div>

@@ -1,18 +1,21 @@
 import { useState } from 'react'
 import DayPlan from './DayPlan'
+import WeekPlan from './WeekPlan'
 import MonthPlan from './MonthPlan'
 import YearPlan from './YearPlan'
 
-type Tab = 'day' | 'month' | 'year'
+type Tab = 'day' | 'week' | 'month' | 'year'
 
 const TABS: { value: Tab; label: string }[] = [
   { value: 'day',   label: '日计划' },
+  { value: 'week',  label: '周计划' },
   { value: 'month', label: '月计划' },
   { value: 'year',  label: '年计划' },
 ]
 
 const SUBTITLES: Record<Tab, string> = {
   day:   '生活 SOP · 固定事项减少决策，让生活轻松有规律',
+  week:  '周度目标管理 · 七天规划，聚焦本周重点',
   month: '月度目标管理 · 宏观把控，每月复盘',
   year:  '年度规划总览 · 锚定方向，季度拆解',
 }
@@ -40,6 +43,7 @@ export default function Routine() {
 
       {/* Tab content */}
       {tab === 'day'   && <DayPlan />}
+      {tab === 'week'  && <WeekPlan />}
       {tab === 'month' && <MonthPlan />}
       {tab === 'year'  && <YearPlan />}
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { api, type MediaPlatform, type MediaContent, type MediaCollab, type ScriptResult } from '../lib/api'
+import { api, type MediaPlatform, type MediaContent, type MediaCollab, type ScriptResult, type MediaTodo } from '../lib/api'
 
 type Tab = 'overview' | 'kanban' | 'collab' | 'script'
 type ScriptMode = 'original' | 'upload' | 'paste'
@@ -21,6 +21,13 @@ const COLLAB_STATUS: Record<string, { label: string; color: string; bg: string }
   new:         { label: '新接触', color: '#1e40af', bg: '#dbeafe' },
   negotiating: { label: '洽谈中', color: '#92400e', bg: '#fef9c3' },
   delivered:   { label: '已交付', color: '#166534', bg: '#dcfce7' },
+}
+
+// Helper: format date like "3/20"
+const formatShortDate = (d: string) => {
+  if (!d) return ''
+  const date = new Date(d)
+  return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
 export default function Media() {
@@ -356,13 +363,51 @@ export default function Media() {
                   <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ background: cfg.bg, color: cfg.color }}>{items.length}</span>
                 </div>
                 <div className="space-y-2.5">
-                  {items.map(item => (
+                  {items.map(item => {
+                    const todos = item.todos || []
+                    const doneCount = todos.filter(t => t.done).length
+                    const totalCount = todos.length
+                    const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0
+                    const hasTime = item.start_date || item.end_date
+                    return (
                     <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-800 transition-colors cursor-pointer group">
                       <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 leading-tight">{item.title}</div>
                       <div className="flex items-center gap-1.5 mb-2">
                         <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
                         {item.platform && <span className="text-[10px] text-gray-400">{item.platform}</span>}
                       </div>
+                      {/* Time info */}
+                      {hasTime && (
+                        <div className="flex items-center gap-1 text-[11px] text-gray-400 mb-2">
+                          <span>📅</span>
+                          <span>{formatShortDate(item.start_date)}{item.start_date && item.end_date ? ' - ' : ''}{formatShortDate(item.end_date)}</span>
+                        </div>
+                      )}
+                      {/* Progress bar */}
+                      {totalCount > 0 && (
+                        <div className="mb-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] text-gray-400">进度</span>
+                            <span className="text-[10px] font-semibold text-[#FF6B6B]">{doneCount}/{totalCount}</span>
+                          </div>
+                          <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #FF6B6B, #f5a623)' }} />
+                          </div>
+                        </div>
+                      )}
+                      {/* Todo tags (compact) */}
+                      {totalCount > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {todos.map((todo, idx) => (
+                            <span key={idx} className={`text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 ${
+                              todo.done ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                            }`}>
+                              <span className={`w-1 h-1 rounded-full ${todo.done ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-500'}`} />
+                              {todo.text}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {item.publish_date && <div className="text-xs text-gray-400">{item.publish_date}</div>}
                       {item.likes > 0 && <div className="text-xs font-bold text-[#FF6B6B]">❤️ {item.likes.toLocaleString()}</div>}
                       <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -376,7 +421,7 @@ export default function Media() {
                         )}
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
                 <button onClick={() => { setShowContentModal(true); setEditingContent({ status }) }}
                   className="w-full mt-3 py-2.5 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl text-xs text-gray-400 hover:border-red-200 hover:text-[#FF6B6B] transition-colors">
@@ -725,7 +770,7 @@ export default function Media() {
       {/* ── Modal: Content edit ── */}
       {showContentModal && editingContent !== null && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => { setShowContentModal(false); setEditingContent(null) }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-96 shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-[420px] shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-4">{editingContent.id ? '✏️ 编辑内容' : '+ 新建内容'}</h3>
             <div className="space-y-3">
               <div>
@@ -758,6 +803,70 @@ export default function Media() {
                   <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">发布日期</label>
                   <input type="date" value={editingContent.publish_date || ''} onChange={e => setEditingContent(p => ({ ...p!, publish_date: e.target.value }))}
                     className="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:border-[#FF6B6B]" />
+                </div>
+              </div>
+              {/* Start/End date */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">开始日期</label>
+                  <input type="date" value={editingContent.start_date || ''} onChange={e => setEditingContent(p => ({ ...p!, start_date: e.target.value }))}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:border-[#FF6B6B]" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">截止日期</label>
+                  <input type="date" value={editingContent.end_date || ''} onChange={e => setEditingContent(p => ({ ...p!, end_date: e.target.value }))}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:border-[#FF6B6B]" />
+                </div>
+              </div>
+              {/* Todos */}
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">待办事项</label>
+                <div className="space-y-2">
+                  {(editingContent.todos || []).map((todo, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newTodos = [...(editingContent.todos || [])]
+                          newTodos[idx] = { ...newTodos[idx], done: !newTodos[idx].done }
+                          setEditingContent(p => ({ ...p!, todos: newTodos }))
+                        }}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                          todo.done ? 'bg-[#FF6B6B] border-[#FF6B6B] text-white' : 'border-gray-300 dark:border-gray-500 hover:border-[#FF6B6B]'
+                        }`}
+                      >
+                        {todo.done && <span className="text-xs">✓</span>}
+                      </button>
+                      <input
+                        type="text"
+                        value={todo.text}
+                        onChange={e => {
+                          const newTodos = [...(editingContent.todos || [])]
+                          newTodos[idx] = { ...newTodos[idx], text: e.target.value }
+                          setEditingContent(p => ({ ...p!, todos: newTodos }))
+                        }}
+                        className={`flex-1 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:border-[#FF6B6B] ${todo.done ? 'line-through text-gray-400' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newTodos = (editingContent.todos || []).filter((_, i) => i !== idx)
+                          setEditingContent(p => ({ ...p!, todos: newTodos }))
+                        }}
+                        className="text-gray-400 hover:text-red-500 text-sm px-1"
+                      >×</button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newTodos = [...(editingContent.todos || []), { text: '', done: false }]
+                      setEditingContent(p => ({ ...p!, todos: newTodos }))
+                    }}
+                    className="w-full py-1.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-400 hover:border-[#FF6B6B] hover:text-[#FF6B6B] transition-colors"
+                  >
+                    + 添加待办
+                  </button>
                 </div>
               </div>
               {editingContent.status === 'published' && (
