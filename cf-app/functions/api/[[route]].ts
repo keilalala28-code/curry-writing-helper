@@ -2548,24 +2548,24 @@ ${refSection}
 ⑤丈夫冷暴力。（「冷暴力」是标签，没有写任何具体行为）
 ⑥女二教唆儿子疏远女主。（「教唆」是标签，没写说了什么话、孩子怎么变化）
 
-【长度示例——每个铺垫事件必须写到这个字数，不能更短】
-下面是一个合格事件的示例（约200字），你的每个[S1E1][S1E2]等必须达到同样字数：
-——女二在家吃饭，把虾仁全部吃完后开始起红疹。男主第一个电话：「你是不是故意的？你作为她姐，你是怎么当的？」女主解释虾仁摆出来时并无异常，男主说「你总有理由」，挂了电话。十分钟后婆婆打来，语气更难听：「明明知道她过敏还放，你存心的是吗？」女主说自己不知道她过敏，婆婆冷笑：「一家人住在一起你不知道？你脑子里装的什么？」女主解释自己真的不知道，电话那边已经挂断了。儿子从房间走出来，看女主一眼，什么都没说又进去了。女主站在厨房，一个人刷了碗，饭桌上女二吃剩的残局原封未动。
+请严格按以下格式输出（每个标签独占一行，不输出JSON）：
 
-请严格按以下标签格式输出，每个事件标签后写与示例同等字数的完整叙述，不能写摘要或一句话概括：
+第一阶段铺垫——写4个场景，场景之间用「---」分隔，每个场景必须有对话原文和连锁反应，像下方示例一样详细：
+示例场景：「女二在家把虾仁全部吃完后起了红疹。男主打来电话：「你是不是故意的？你作为她姐你是怎么当的？」女主解释虾仁摆出来时并无异常，男主说「你总有理由」就挂了。十分钟后婆婆打来，语气更难听：「明明知道她过敏还放，你存心的是吗？」儿子从房间走出来，看女主一眼，什么都没说又进去了。女主站在厨房，一个人刷了碗，饭桌上女二吃剩的残局原封未动。」（以上是一个场景的示例字数，你的每个场景必须达到同等详细程度）
+[S1]
 
-[S1E1]
-[S1E2]
-[S1E3]
-[S1E4]
 [TURN1]第一阶段转折点（60字内，渣男/女二做了某件让局势骤然恶化的行动，❌禁止写女主察觉任何真相）
-[S2E1]
-[S2E2]
-[S2E3]
-[S2E4]
+
+第二阶段铺垫——写4个场景比第一阶段更惨，场景之间用「---」分隔，每个场景必须有对话原文和连锁反应：
+[S2]
+
 [TURN2]第二阶段转折点（60字内，写女主离开的具体行动——拎包/买票/签字/走人，❌不写发现真相）
+
+第三阶段追妻（女主已离开，全程男主视角，写6个连续场景，每场4-5句）：
 [STORY-S3]
+
 [TURN3]第三阶段转折点（60字内，真相在男主面前完全揭露）
+
 [SUMMARY]一句话梗概（30字内，写悲剧被虐感）
 [QI]起（60字内）
 [CHENG]承（60字内）
@@ -2599,7 +2599,7 @@ ${refSection}
         system: '你是一位中文网文策划专家，专门生成"被动受虐→心死离开→男主追妻"型虐文细纲。你的核心职责：每个铺垫事件标签（[S1E1]、[S1E2]、[S2E1]等）后面必须写200字左右的完整场景叙述，绝对不允许写一句话摘要。每个事件必须包含：①具体触发行为（谁做了什么，在哪里，怎么发生的）②对话原文（至少一句，用「」引号）③其他角色的连锁反应（动作+话语）④女主被迫承受的结果或处境。写完一个事件后，必须在脑中检查：有没有对话？有没有连锁反应？有没有女主的处境描写？字数够不够200字？不够必须继续补充。',
         messages: [
           { role: 'user', content: prompt },
-          { role: 'assistant', content: '[S1E1]\n' },
+          { role: 'assistant', content: '[S1]\n' },
         ],
       }),
     })
@@ -2610,8 +2610,8 @@ ${refSection}
     }
 
     const data = await res.json() as { content: { type: string; text: string }[] }
-    // Prepend the assistant prefill tag so getTag('[S1E1]') can find it
-    const raw = '[S1E1]\n' + (data.content?.find(b => b.type === 'text')?.text || '')
+    // Prepend the assistant prefill tag so getTag('S1') can find it
+    const raw = '[S1]\n' + (data.content?.find(b => b.type === 'text')?.text || '')
     try {
       // Parse tagged output format [TAGNAME]content
       const getTag = (tag: string): string => {
@@ -2619,8 +2619,6 @@ ${refSection}
         const m = raw.match(re)
         return m ? m[1].trim() : ''
       }
-      const mergeEvents = (tags: string[]): string =>
-        tags.map(t => getTag(t)).filter(Boolean).join('\n\n')
       const result = {
         summary: getTag('SUMMARY'),
         structure: { qi: getTag('QI'), cheng: getTag('CHENG'), zhuan: getTag('ZHUAN'), he: getTag('HE') },
@@ -2628,8 +2626,8 @@ ${refSection}
         characters: { protagonist: getTag('PROTAGONIST'), antagonist: getTag('ANTAGONIST'), bystanders: getTag('BYSTANDERS') },
         emotion_elements: getTag('EMOT-ELEM'),
         outline: [
-          { segment: '前段', setup: mergeEvents(['S1E1', 'S1E2', 'S1E3', 'S1E4']), turning: getTag('TURN1'), emotion: getTag('EMOT1') },
-          { segment: '中段', setup: mergeEvents(['S2E1', 'S2E2', 'S2E3', 'S2E4']), turning: getTag('TURN2'), emotion: getTag('EMOT2') },
+          { segment: '前段', setup: getTag('S1'), turning: getTag('TURN1'), emotion: getTag('EMOT1') },
+          { segment: '中段', setup: getTag('S2'), turning: getTag('TURN2'), emotion: getTag('EMOT2') },
           { segment: '后段', setup: getTag('STORY-S3'), turning: getTag('TURN3'), emotion: getTag('EMOT3') },
         ],
         emotion_arc: { up: getTag('UP'), down: getTag('DOWN') },
