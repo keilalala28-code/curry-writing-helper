@@ -2593,7 +2593,7 @@ ${refSection}
       },
       body: JSON.stringify({
         model,
-        max_tokens: 16000,
+        max_tokens: 8192,
         messages: [{ role: 'user', content: prompt }],
       }),
     })
