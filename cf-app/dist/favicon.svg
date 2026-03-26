@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Left page -->
+  <path d="M6 14C6 11.8 7.8 10 10 10H30V52H10C7.8 52 6 50.2 6 48V14Z" fill="#FF6B6B"/>
+  <!-- Right page -->
+  <path d="M58 14C58 11.8 56.2 10 54 10H34V52H54C56.2 52 58 50.2 58 48V14Z" fill="#FF8C69"/>
+  <!-- Spine shadow -->
+  <rect x="29" y="10" width="6" height="42" fill="#D94F4F" rx="1"/>
+  <!-- Page lines left -->
+  <line x1="13" y1="21" x2="27" y2="21" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>
+  <line x1="13" y1="28" x2="27" y2="28" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>
+  <line x1="13" y1="35" x2="24" y2="35" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="13" y1="42" x2="22" y2="42" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.3"/>
+  <!-- Page lines right -->
+  <line x1="37" y1="21" x2="51" y2="21" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>
+  <line x1="37" y1="28" x2="51" y2="28" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>
+  <line x1="37" y1="35" x2="48" y2="35" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="37" y1="42" x2="46" y2="42" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.3"/>
+  <!-- Bottom curve -->
+  <path d="M6 48C6 50.2 7.8 52 10 52H30V54C30 54 22 53 14 55C10 56 6 54 6 51V48Z" fill="#C94444" opacity="0.4"/>
+  <path d="M58 48C58 50.2 56.2 52 54 52H34V54C34 54 42 53 50 55C54 56 58 54 58 51V48Z" fill="#C94444" opacity="0.3"/>
+</svg>
