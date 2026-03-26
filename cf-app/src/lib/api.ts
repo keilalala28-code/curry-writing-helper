@@ -374,13 +374,7 @@ export interface HealthExercise {
 }
 
 export interface OutlineResult {
-  summary: string
-  structure: { qi: string; cheng: string; zhuan: string; he: string }
-  event_flow: { desire: string; obstacle: string; action: string; achieve: string }
-  characters: { protagonist: string; antagonist: string; bystanders: string }
-  emotion_elements: string
   outline: { segment: string; setup: string; turning: string; emotion: string }[]
-  emotion_arc: { up: string; down: string }
 }
 
 export interface DiaryEntry {

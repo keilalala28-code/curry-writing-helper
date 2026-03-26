@@ -2349,292 +2349,96 @@ app.post('/generate-outline', async (c) => {
   const { idea, perspective = '女主视角' } = await c.req.json()
   if (!idea) return c.json({ error: '请输入你的点子' }, 400)
 
-  const db = c.env.DB
   const baseUrl = c.env.AI_BASE_URL || 'https://api.anthropic.com'
   const apiKey  = c.env.AI_API_KEY
-  // Use Haiku for outline: ~200 tokens/s keeps response under Cloudflare's 30s timeout
   const model   = 'claude-haiku-4-5-20251001'
 
-  // ── 从文章库提取参考：10篇 hooks 学爆点规律 + 2篇最相关正文节选示范情节密度 ─
-  type ArtRow = { id: string; title: string; content: string }
+  const sysPrompt = '你是中文网文细纲策划专家，专门生成"被虐离开→男主追妻"型故事的铺垫事件。每个事件必须：①500字以上②包含具体触发行为③包含至少2句对话原文（用「」）④包含其他角色的连锁反应⑤写出女主被迫承受的结果。禁止写一句话摘要，禁止写编号列表，每个事件是完整的叙述段落。'
 
-  const keywords = extractKeywords(idea)
-  let matchedIds: string[] = []
-  let randomIds: string[] = []
+  const storyCtx = `故事点子：「${idea}」\n视角：${perspective}`
 
-  if (keywords.length > 0) {
-    const conds: string[] = []
-    const ps: string[] = []
-    for (const kw of keywords) {
-      conds.push('EXISTS (SELECT 1 FROM article_hooks ah2 WHERE ah2.article_id = a.id AND ah2.hook LIKE ?)')
-      ps.push(`%${kw}%`)
-      conds.push('a.category LIKE ?')
-      ps.push(`%${kw}%`)
-      conds.push('EXISTS (SELECT 1 FROM article_tags at2 WHERE at2.article_id = a.id AND at2.tag LIKE ?)')
-      ps.push(`%${kw}%`)
-      conds.push('a.title LIKE ?')
-      ps.push(`%${kw}%`)
-    }
-    const { results } = await db.prepare(
-      `SELECT a.id FROM articles a WHERE (${conds.join(' OR ')}) ORDER BY RANDOM() LIMIT 10`
-    ).bind(...ps).all()
-    matchedIds = (results as { id: string }[]).map(r => r.id)
-  }
-
-  // 不足 10 篇随机补足
-  if (matchedIds.length < 10) {
-    const excl = matchedIds.length > 0
-      ? `WHERE id NOT IN (${matchedIds.map(() => '?').join(',')})`
-      : ''
-    const { results } = await db.prepare(
-      `SELECT id FROM articles ${excl} ORDER BY RANDOM() LIMIT ?`
-    ).bind(...matchedIds, 10 - matchedIds.length).all()
-    randomIds = (results as { id: string }[]).map(r => r.id)
-  }
-
-  const allIds = [...matchedIds, ...randomIds].slice(0, 10)
-  // 关键词匹配到的前 2 篇用于正文节选（最相关），其余只取 hooks
-  const excerptIds = matchedIds.slice(0, 2)
-
-  let refSection = ''
-  if (allIds.length > 0) {
-    const ph10 = allIds.map(() => '?').join(',')
-    const [artRes, hookRes] = await Promise.all([
-      db.prepare(
-        `SELECT id, title, content FROM articles WHERE id IN (${ph10})`
-      ).bind(...allIds).all(),
-      db.prepare(
-        `SELECT article_id, hook FROM article_hooks WHERE article_id IN (${ph10}) AND hook != '待分析'`
-      ).bind(...allIds).all(),
-    ])
-
-    const hookMap: Record<string, string[]> = {}
-    for (const r of hookRes.results as { article_id: string; hook: string }[]) {
-      if (!hookMap[r.article_id]) hookMap[r.article_id] = []
-      hookMap[r.article_id].push(r.hook)
-    }
-
-    const arts = artRes.results as ArtRow[]
-    const allHooks = [...new Set(arts.flatMap(a => hookMap[a.id] || []))]
-
-    // 正文节选：最相关的 2 篇，每篇取 300 字，展示情节密度
-    const excerptParts = arts
-      .filter(a => excerptIds.includes(a.id) && a.content)
-      .map(a => `《${a.title}》节选：\n${a.content.slice(0, 300)}`)
-      .join('\n\n')
-
-    refSection = `
-【文章库参考（${arts.length}篇，仅学习规律，情节必须全部原创）】
-
-① 爆点组合规律（${arts.length}篇文章的爆点标签，反映读者偏好）：
-${allHooks.join('、')}
-${excerptParts ? `\n② 情节密度示例（最相关${excerptIds.length > 0 ? excerptIds.length : 2}篇正文节选，学习「每句话都有具体事件」的写法）：\n${excerptParts}` : ''}
-
-学习要点：用①的爆点逻辑 + ②的情节密度，写出全新情节。`
-  }
-
-  const prompt = `你是一个擅长情绪结构的中文短篇网文策划。请根据用户提供的点子，生成一份对标爆款逻辑的情绪结构细纲。
-
-爆款三要素：情绪（每个场景有清晰情绪目标）× 节奏（铺垫与爆发交替）× 创新（人设或情节有差异化）
-
-用户点子（可能很模糊）：「${idea}」
-视角：${perspective}
-${refSection}
-
-⚠️⚠️⚠️【故事类型强制声明——生成任何内容之前必须先理解这一条】⚠️⚠️⚠️
-
-本次生成的是「被动受虐→心死离开→男主追妻」型虐文，绝对不是「觉醒复仇」型爽文。
-
-两种类型对比（请判断自己写的是哪种，写错即不合格）：
-
-❌ 觉醒复仇型（本次禁止）：女主发现真相 → 主动策划 → 假装顺从布局 → 当众揭露 → 爽
-✅ 被虐离开型（本次要写）：女主一直被蒙在鼓里受伤害 → 心彻底死了 → 默默收拾离开 → 男主自己后来发现真相 → 追妻被拒
-
-本次正确时间线（硬性规定，不能改变）：
-- 付费卡点之前（铺垫1+铺垫2）：女主全程被虐，不知道任何阴谋真相，没有布局，没有调查
-- 付费卡点（铺垫2的转折点）：女主只是心死了，拎包离开——不是因为发现了什么
-- 付费卡点之后（铺垫3）：男主视角，他发现家空了→疯狂找→翻到遗物→自己发现真相→追妻被拒
-
-真相揭露必须发生在女主离开之后，由男主自己找到证据或第三方告知，女主不主动揭露任何事。
-
-用户点子只是梗概，不是完整情节。你需要围绕梗概创作4-5倍的具体场景事件，每个用户提到的大事件需要展开成2-3个具体铺垫场景。
-
-【铺垫情节写法要求——最核心，对照示例严格执行】
-
-【全局字数强制要求——必须达到，不达到视为不合格】
-- 第一阶段铺垫：4-5个事件，每个事件不少于120字（相当于可以写成500字的场景蓝图）
-- 第二阶段铺垫：4-5个事件，每个事件不少于120字
-- 第一+第二阶段合计：必须是8-9个完整的虐女主事件，缺一不可
-- 第三阶段铺垫：6-8个男主追妻事件，每个事件不少于80字
-- 每一条不是摘要，是"事件经过"：有触发→有谁怎么反应→有女主被迫承受什么结果，读完能直接改写成500字正文
-- 写不够就继续写，绝不能为了省字而压缩内容
-
-这类故事结构：渣男/女二持续施害 → 女主承受，偶尔有情绪反应但被压得更惨 → 女主决定离开 → 付费后男主追妻火葬场。
-铺垫阶段的主语永远是渣男和女二，不是女主。女主在这个阶段没有策略、没有主动调查、没有隐忍计划——她只是一个被反复伤害的人。
-
-【写法标准：故事叙述，不是情节摘要】
-铺垫不是写"发生了什么事（摘要）"，而是写"当时具体是怎么回事（叙述）"。
-每一条都像截取了故事里的一个片段：有具体的人物动作、有对话、有连续的事件经过、有女主当时的状态。
-一条里必须包含3-5个连续的小动作，串成一个完整的小事件，不能只写一句话。
-
-【第一、二阶段铺垫——绝对禁止出现的内容（出现即错）】：
-✗ 女主主动行为类：暗中调查 / 秘密收集证据 / 配合xxx / 开始布局 / 等待时机 / 隐忍计划
-✗ 女主觉醒/察觉类：发现疑点 / 察觉异常 / 意识到真相 / 开始怀疑 / 醒悟 / 发现端倪 / 隐约感觉到
-✗ 任何暗示女主「已经知道了某件事」「开始警觉」「内心有所转变」的句子
-✗ 一句话摘要式表述（如「渣男偏袒女二」「女二当众羞辱女主」——太笼统，要写具体场景）
-✗ 抽象行为标签式表述——以下词语出现即代表没有写具体内容，必须替换成场景：
-   「冷暴力」→ 要写：他回家不说话/吃饭不看她/她叫他名字他不应/睡觉背对她，具体说了什么或不说什么
-   「偏心/偏袒」→ 要写：父母当面把钱塞给女二/过生日时改成庆祝女二的事/当着邻居面夸女二从不提女主，有具体场景
-   「教唆/挑拨」→ 要写：女二趁女主不在时对孩子/公婆说了什么具体的话，用了什么说辞，对方之后有什么变化
-   「孤立/排斥/冷落」→ 要写：在什么场合、用什么具体行动孤立她，旁人有什么反应
-   「感情破裂/关系恶化」→ 要写：哪一件具体的事让关系出现裂痕，当时谁说了什么话
-
-第一、二阶段女主只有一种状态：不断被伤害、不断尝试相信、不断失望——但她没有察觉到任何阴谋，她以为这就是命运。真相的揭露留给转折点，不要提前泄露给女主。
-
-【转折点——与铺垫适用同样禁令，出现即错】：
-✗ 第一、二阶段转折点绝不能写：女主察觉/意识到/怀疑/发现/查到/看破任何阴谋或真相
-✗ 转折点不是女主的「认知觉醒」，而是外部局势发生了变化，或女主做了一个行动
-✓ 第一阶段转折点写法示例：「渣男做了某件让局势突然恶化的事，女主被彻底堵死反抗通道」——写渣男的行动，不是女主的想法
-✓ 第二阶段转折点写法示例：「女主拉着行李坐飞机离开」——写她的离开行动，不是她发现了什么
-✓ 第三阶段转折点写法示例：「渣男翻到触目惊心的东西（日记/B超单/旧录像），当场崩溃」——写渣男的反应
-
-【允许写的内容】：
-✓ 渣男/女二的具体行为、说的话、做的事
-✓ 女主的情绪崩溃、哭泣、争吵、扇人——但结果是她被惩罚得更惨
-✓ 女主被动知道了某件事（无意中听到、被迫看到），但不是主动去查
-
-【真实示例——就是这种详细程度和写法风格】：
-（以下是真实故事大纲节选，照着这个写）
-
-第二阶段铺垫示例：
-②男主问为什么不联系，我被碰瓷男主却不接电话（说女二胃痛）
-③我神色平静，不哭不闹，男主觉得我变了，女二打给男主说在商场东西太多，男主拒了又去了
-④女二玩狗、故意要住这里。男主让她别惹事，女二说我装大度，让狗咬我。我自己上了药，半夜着火了。男主救狗，都不救女主。女主倒在血泊中
-⑤女主醒过来，对男主说没有意思指望。男主又接到女二电话，男主这次没走。那天是女主母亲忌日。出院那天，男主硬拉着我去女二生日会。女二故意和别的男人跳舞，男主捏碎酒杯把女二拉出来亲了起来。水晶吊灯掉下来，男主护住女二。
-⑥女主回家收东西，女二推我，男主先救女二。男主留在了医院，说女二受了惊吓
-
-第三阶段铺垫示例：
-⑦男主打不通女主电话，质问女二。收到了民政局的离婚信息。回家发现家里空荡荡的，还有离婚协议和一封信。男主去候机大厅疯狂找女主
-⑨女二打电话给男主，男主让她滚。男主疯狂找女主，变得很邋遢，找女主的闺蜜，闺蜜狠狠骂他
-⑩男主回去，翻到女主当年为了结婚练习的录像，发现了女主的日记本和B超单。男主发现女主让他救他的信息和以前的短信
-
-【三阶段分工——严格执行】：
-第一阶段：渣男/女二施害，写具体事件经过，女主被反复伤害，情绪反应让处境更糟，无策略无布局
-第二阶段：施害持续升级，女主继续被虐，直到某次被虐到极致后决定离开——转折点是她拎包/出门/签字/离开的那个动作，不是她发现了什么
-第三阶段：⚠️女主已经离开，第三阶段全部内容从渣男/男主视角写：他发现家是空的、他疯狂找人、他翻到触目惊心的东西（遗物/日记/B超单/录音）崩溃、他被女主朋友骂/被拒见、他跪地求饶被无视。真相揭露（包括女二设局的证据）也在第三阶段。女主在第三阶段只有一种状态：冷漠、拒绝、不回头。⚠️第三阶段铺垫里绝对不能写「女主暗中准备/联系律师/收集证据」这类主动策略。
-
-【铺垫条数强制检查——生成JSON前在脑中过一遍，不达标必须补足】
-第一阶段 setup 字段：4-5个事件。写完每一条后检查：这条至少120字了吗？有触发→反应→女主状态吗？不达标必须补充。
-第二阶段 setup 字段：4-5个事件。第一+第二阶段加起来必须达到8-9个事件，数一数，不够继续写。
-第三阶段 setup 字段：6-8个男主追妻事件，每个展开4句以上。
-
-⚠️ 写了 ③ 就想结尾 = 不合格，必须强制继续写。
-⚠️ 铺垫不是写「发生了什么（一句话摘要）」，而是写「当时怎么回事（触发事件+多人反应+女主处境，至少4句连续叙述）」。
-每一条铺垫都必须包含4个以上连续句子，包含：触发行为、其他角色反应（对话或动作）、女主的被动处境或情绪。像这样：
-
-【合格示例——这是需要的详细程度，每条都像这样写】
-
-✅ 合格事件④（多人连锁反应型）：
-女二在家吃饭，把虾仁全部吃完后开始起红疹。男主第一个电话：「你是不是故意的？你作为她姐，你是怎么当的？」女主解释虾仁摆出来时并无异常，男主说「你总有理由」，挂了电话。十分钟后婆婆打来，语气更难听：「明明知道她过敏还放，你存心的是吗？」儿子从房间走出来，看女主一眼，不说话又进去了。女主站在厨房，一个人刷了碗，饭桌上女二吃剩的残局原封未动。
-
-✅ 合格事件⑤（行为细节型）：
-男主那阵回家从不和女主说话。女主做好饭喊他，他拿着手机直接进卧室，女主问「你怎么了」，他说「没事，累了」，反锁了门。女主在门外站了十分钟，听见里面有接电话的声音，声音低而温柔。吃饭时女主把菜推到他面前，他夹了两筷子就说吃饱了，拿上外套出门。女主坐在饭桌前，菜都还冒着热气。
-
-✅ 合格事件⑥（挑拨连锁型）：
-女二趁女主去上班，把儿子叫过来说「妈妈最近不爱你了，你看她连你的事都顾不上」，说着哭起来，「只有姨妈真心疼你」。女主下班回来，喊儿子，儿子把头转开不应。女主蹲下来问他怎么了，他把脸转向另一边说「我不想理你」。女主愣了很久，问男主，男主说「你自己反思一下，是不是最近太忽略孩子了」。
-
-❌ 不合格写法（以下这些直接不及格）：
-④女二过敏责怪女主。（一句摘要，没有完整经过）
-⑤丈夫冷暴力。（「冷暴力」是标签，没有写任何具体行为）
-⑥女二教唆儿子疏远女主。（「教唆」是标签，没写说了什么话、孩子怎么变化）
-
-请严格按以下格式输出（每个标签独占一行，不输出JSON）：
-
-第一阶段铺垫——写4个场景，场景之间用「---」分隔，每个场景必须有对话原文和连锁反应，像下方示例一样详细：
-示例场景：「女二在家把虾仁全部吃完后起了红疹。男主打来电话：「你是不是故意的？你作为她姐你是怎么当的？」女主解释虾仁摆出来时并无异常，男主说「你总有理由」就挂了。十分钟后婆婆打来，语气更难听：「明明知道她过敏还放，你存心的是吗？」儿子从房间走出来，看女主一眼，什么都没说又进去了。女主站在厨房，一个人刷了碗，饭桌上女二吃剩的残局原封未动。」（以上是一个场景的示例字数，你的每个场景必须达到同等详细程度）
-[S1]
-
-[TURN1]第一阶段转折点（60字内，渣男/女二做了某件让局势骤然恶化的行动，❌禁止写女主察觉任何真相）
-
-第二阶段铺垫——写4个场景比第一阶段更惨，场景之间用「---」分隔，每个场景必须有对话原文和连锁反应：
-[S2]
-
-[TURN2]第二阶段转折点（60字内，写女主离开的具体行动——拎包/买票/签字/走人，❌不写发现真相）
-
-第三阶段追妻（女主已离开，全程男主视角，写6个连续场景，每场4-5句）：
-[STORY-S3]
-
-[TURN3]第三阶段转折点（60字内，真相在男主面前完全揭露）
-
-[SUMMARY]一句话梗概（30字内，写悲剧被虐感）
-[QI]起（60字内）
-[CHENG]承（60字内）
-[ZHUAN]转（60字内）
-[HE]合（60字内）
-[DESIRE]欲望（40字内）
-[OBSTACLE]阻碍（80字内，①②分点）
-[ACTION]行动（40字内）
-[ACHIEVE]达成（60字内）
-[PROTAGONIST]主角势力（30字内）
-[ANTAGONIST]反派势力（20字内）
-[BYSTANDERS]围观群众（20字内，无则写「无」）
-[EMOT-ELEM]情绪点要素（100字内）
-[EMOT1]情绪点①：①(场景→情绪) ②(场景→情绪) ③(场景→情绪)
-[EMOT2]情绪点②：①(场景→情绪) ②(场景→情绪) ③(场景→情绪)
-[EMOT3]情绪点③：①(追妻爽点) ②(真相崩溃) ③(最解气)
-[UP]上行情绪：1.(节点) 2.(节点) 3.(节点)
-[DOWN]下行情绪：1.(节点) 2.(节点) 3.(节点)`
-
-  try {
-    const res = await fetch(`${baseUrl}/v1/messages`, {
+  const callAI = (systemMsg: string, userMsg: string, maxTok: number) =>
+    fetch(`${baseUrl}/v1/messages`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 8192,
-        system: '你是一位中文网文策划专家，专门生成"被动受虐→心死离开→男主追妻"型虐文细纲。你的核心职责：每个铺垫事件标签（[S1E1]、[S1E2]、[S2E1]等）后面必须写200字左右的完整场景叙述，绝对不允许写一句话摘要。每个事件必须包含：①具体触发行为（谁做了什么，在哪里，怎么发生的）②对话原文（至少一句，用「」引号）③其他角色的连锁反应（动作+话语）④女主被迫承受的结果或处境。写完一个事件后，必须在脑中检查：有没有对话？有没有连锁反应？有没有女主的处境描写？字数够不够200字？不够必须继续补充。',
-        messages: [
-          { role: 'user', content: prompt },
-          { role: 'assistant', content: '[S1]\n' },
-        ],
-      }),
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model, max_tokens: maxTok, system: systemMsg, messages: [{ role: 'user', content: userMsg }] }),
     })
 
-    if (!res.ok) {
-      const err = await res.text()
-      return c.json({ error: `AI API 错误: ${res.status}`, detail: err }, 502)
-    }
+  const parseText = async (res: Response): Promise<string> => {
+    if (!res.ok) { const e = await res.text(); throw new Error(`API ${res.status}: ${e}`) }
+    const d = await res.json() as { content: { type: string; text: string }[] }
+    return d.content?.find(b => b.type === 'text')?.text || ''
+  }
 
-    const data = await res.json() as { content: { type: string; text: string }[] }
-    // Prepend the assistant prefill tag so getTag('S1') can find it
-    const raw = '[S1]\n' + (data.content?.find(b => b.type === 'text')?.text || '')
-    try {
-      // Parse tagged output format [TAGNAME]content
-      const getTag = (tag: string): string => {
-        const re = new RegExp(`\\[${tag}\\]([\\s\\S]*?)(?=\\n\\[[A-Z0-9A-Z-]+\\]|$)`)
-        const m = raw.match(re)
-        return m ? m[1].trim() : ''
-      }
-      const result = {
-        summary: getTag('SUMMARY'),
-        structure: { qi: getTag('QI'), cheng: getTag('CHENG'), zhuan: getTag('ZHUAN'), he: getTag('HE') },
-        event_flow: { desire: getTag('DESIRE'), obstacle: getTag('OBSTACLE'), action: getTag('ACTION'), achieve: getTag('ACHIEVE') },
-        characters: { protagonist: getTag('PROTAGONIST'), antagonist: getTag('ANTAGONIST'), bystanders: getTag('BYSTANDERS') },
-        emotion_elements: getTag('EMOT-ELEM'),
-        outline: [
-          { segment: '前段', setup: getTag('S1'), turning: getTag('TURN1'), emotion: getTag('EMOT1') },
-          { segment: '中段', setup: getTag('S2'), turning: getTag('TURN2'), emotion: getTag('EMOT2') },
-          { segment: '后段', setup: getTag('STORY-S3'), turning: getTag('TURN3'), emotion: getTag('EMOT3') },
-        ],
-        emotion_arc: { up: getTag('UP'), down: getTag('DOWN') },
-      }
-      if (!result.summary) return c.json({ error: '解析失败：未找到标签格式内容', raw }, 502)
-      return c.json(result)
-    } catch (e) { return c.json({ error: `解析失败: ${(e as Error).message}`, raw }, 502) }
+  try {
+    // 3 parallel calls — each generates one stage to avoid 30s timeout
+    const [raw1, raw2, raw3] = await Promise.all([
+      // Stage 1: 4 abuse events, each 500+ chars, separated by ---
+      callAI(sysPrompt, `${storyCtx}
+
+生成第一阶段铺垫（女主被虐，全程无察觉，无策略）：4个事件，每个事件写一个完整叙述段落，500字以上，事件间用「---」分隔。
+
+事件类型：
+事件1：男主当面偏袒女二/无视女主的具体场景
+事件2：女二设局陷害女主被罚的完整经过
+事件3：家人（公婆/儿子/父母）当面指责女主
+事件4：公开场合女主被旁观者围观羞辱
+
+直接写正文，不要编号，不要标题，事件之间用「---」分隔：`, 4096).then(parseText),
+
+      // Stage 2: 4 abuse events + 1 emotional breaking point, each 500+ chars
+      callAI(sysPrompt, `${storyCtx}
+
+生成第二阶段铺垫（比第一阶段更惨，女主情感走向彻底死心）：5个事件，每个500字以上，事件间用「---」分隔。
+
+事件类型：
+事件1：女主身体或精神受到更深程度伤害
+事件2：女主向某人求助被拒绝/被反骂
+事件3：女主试图反抗，结果被更惨地对待
+事件4：虐到极致——某件具体的事让女主几乎崩溃
+事件5（小转折/心死时刻）：女主情感彻底死心的那一刻（不是发现真相，是心死了——被迫承受了某件无法挽回的事后，她不再抱有任何期望）
+
+直接写正文，不要编号，事件间用「---」分隔：`, 4096).then(parseText),
+
+      // Stage 3: male POV + turning points + emotion points
+      callAI('你是中文网文细纲策划专家。生成追妻火葬场阶段的内容：第三阶段铺垫全程男主视角，女主已离开，写6个男主找人/崩溃/发现真相/追妻被拒的场景，每场200字以上，场景间用---分隔。另外生成三个阶段的转折点和情绪点。',
+        `${storyCtx}
+
+生成以下内容：
+
+第三阶段铺垫（全程男主视角，女主已离开，写6个完整场景，每场200字以上，场景间用---分隔）：
+[S3]
+
+然后生成结构标签（每个标签一行，紧跟内容）：
+[TURN1]第一阶段转折点（60字内，渣男/女二的行动让局势骤然恶化，❌不写女主察觉真相）
+[EMOT1]情绪点①：①(场景→读者情绪) ②(场景→情绪) ③(场景→情绪)
+[TURN2]第二阶段转折点（60字内，写女主离开的行动——拎包/买票/签字/走人，❌不写发现真相）
+[EMOT2]情绪点②：①(场景→情绪) ②(场景→情绪) ③(场景→情绪)
+[TURN3]第三阶段转折点（60字内，真相在男主面前完全揭露）
+[EMOT3]情绪点③：①(男主追妻爽点) ②(真相大白崩溃) ③(最解气结局)`, 4096).then(parseText),
+    ])
+
+    // Parse stage 3 + meta from raw3
+    const getTag = (tag: string, text: string): string => {
+      const re = new RegExp(`\\[${tag}\\]([\\s\\S]*?)(?=\\n\\[[A-Z0-9A-Z-]+\\]|$)`)
+      const m = text.match(re)
+      return m ? m[1].trim() : ''
+    }
+    const s3Setup = getTag('S3', raw3)
+    const turn1   = getTag('TURN1', raw3)
+    const emot1   = getTag('EMOT1', raw3)
+    const turn2   = getTag('TURN2', raw3)
+    const emot2   = getTag('EMOT2', raw3)
+    const turn3   = getTag('TURN3', raw3)
+    const emot3   = getTag('EMOT3', raw3)
+
+    return c.json({
+      outline: [
+        { segment: '前段', setup: raw1.trim(), turning: turn1, emotion: emot1 },
+        { segment: '中段', setup: raw2.trim(), turning: turn2, emotion: emot2 },
+        { segment: '后段', setup: s3Setup, turning: turn3, emotion: emot3 },
+      ],
+    })
   } catch (e) {
     return c.json({ error: String(e) }, 502)
   }
