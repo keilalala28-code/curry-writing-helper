@@ -2343,105 +2343,73 @@ app.delete('/health/exercise/:id', async (c) => {
   return c.json({ success: true })
 })
 
-// ─── 点子生成细纲 ──────────────────────────────────────────────────────────────
+// ─── 点子生成细纲（3 independent CF endpoints, each with its own 30s budget）──
 
-app.post('/generate-outline', async (c) => {
+const OUTLINE_SYS = '你是中文网文细纲策划专家，专门生成"被虐离开→男主追妻"型故事的铺垫事件。每个事件必须：①500字以上②包含具体触发行为③包含至少2句对话原文（用「」）④包含其他角色的连锁反应⑤写出女主被迫承受的结果。禁止写一句话摘要，禁止写编号列表，每个事件是完整的叙述段落。'
+
+function outlineCallAI(baseUrl: string, apiKey: string, system: string, user: string, maxTok: number) {
+  return fetch(`${baseUrl}/v1/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: maxTok, system, messages: [{ role: 'user', content: user }] }),
+  })
+}
+
+async function outlineParseText(res: Response): Promise<string> {
+  if (!res.ok) { const e = await res.text(); throw new Error(`API ${res.status}: ${e}`) }
+  const d = await res.json() as { content: { type: string; text: string }[] }
+  return d.content?.find(b => b.type === 'text')?.text || ''
+}
+
+// Stage 1: 4 abuse events (each 500+ chars)
+app.post('/generate-outline/s1', async (c) => {
   const { idea, perspective = '女主视角' } = await c.req.json()
   if (!idea) return c.json({ error: '请输入你的点子' }, 400)
-
-  const baseUrl = c.env.AI_BASE_URL || 'https://api.anthropic.com'
-  const apiKey  = c.env.AI_API_KEY
-  const model   = 'claude-haiku-4-5-20251001'
-
-  const sysPrompt = '你是中文网文细纲策划专家，专门生成"被虐离开→男主追妻"型故事的铺垫事件。每个事件必须：①500字以上②包含具体触发行为③包含至少2句对话原文（用「」）④包含其他角色的连锁反应⑤写出女主被迫承受的结果。禁止写一句话摘要，禁止写编号列表，每个事件是完整的叙述段落。'
-
-  const storyCtx = `故事点子：「${idea}」\n视角：${perspective}`
-
-  const callAI = (systemMsg: string, userMsg: string, maxTok: number) =>
-    fetch(`${baseUrl}/v1/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model, max_tokens: maxTok, system: systemMsg, messages: [{ role: 'user', content: userMsg }] }),
-    })
-
-  const parseText = async (res: Response): Promise<string> => {
-    if (!res.ok) { const e = await res.text(); throw new Error(`API ${res.status}: ${e}`) }
-    const d = await res.json() as { content: { type: string; text: string }[] }
-    return d.content?.find(b => b.type === 'text')?.text || ''
-  }
-
+  const base = c.env.AI_BASE_URL || 'https://api.anthropic.com'
   try {
-    // 3 parallel calls — each generates one stage to avoid 30s timeout
-    const [raw1, raw2, raw3] = await Promise.all([
-      // Stage 1: 4 abuse events, each 500+ chars, separated by ---
-      callAI(sysPrompt, `${storyCtx}
+    const raw = await outlineCallAI(base, c.env.AI_API_KEY, OUTLINE_SYS,
+      `故事点子：「${idea}」\n视角：${perspective}\n\n生成第一阶段铺垫（女主被虐，全程无察觉，无策略）：4个事件，每个写完整叙述段落，500字以上，事件间用「---」分隔。\n\n事件1：男主当面偏袒女二/无视女主的具体场景\n事件2：女二设局陷害女主被罚的完整经过\n事件3：家人（公婆/儿子/父母）当面指责女主\n事件4：公开场合女主被旁观者围观羞辱\n\n直接写正文，不要编号，不要标题，事件之间用「---」分隔：`,
+      3500).then(outlineParseText)
+    return c.json({ setup: raw.trim() })
+  } catch (e) { return c.json({ error: String(e) }, 502) }
+})
 
-生成第一阶段铺垫（女主被虐，全程无察觉，无策略）：4个事件，每个事件写一个完整叙述段落，500字以上，事件间用「---」分隔。
+// Stage 2: 4 abuse events + 1 heart-death moment (each 500+ chars)
+app.post('/generate-outline/s2', async (c) => {
+  const { idea, perspective = '女主视角' } = await c.req.json()
+  if (!idea) return c.json({ error: '请输入你的点子' }, 400)
+  const base = c.env.AI_BASE_URL || 'https://api.anthropic.com'
+  try {
+    const raw = await outlineCallAI(base, c.env.AI_API_KEY, OUTLINE_SYS,
+      `故事点子：「${idea}」\n视角：${perspective}\n\n生成第二阶段铺垫（比第一阶段更惨，女主情感走向彻底死心）：5个事件，每个500字以上，事件间用「---」分隔。\n\n事件1：女主身体或精神受到更深程度伤害\n事件2：女主向某人求助被拒绝/被反骂\n事件3：女主试图反抗，结果被更惨地对待\n事件4：虐到极致——某件具体的事让女主几乎崩溃\n事件5（心死时刻）：女主情感彻底死心的那一刻（不是发现真相，是心死了——被迫承受了某件无法挽回的事后，她不再抱有任何期望）\n\n直接写正文，不要编号，事件间用「---」分隔：`,
+      4096).then(outlineParseText)
+    return c.json({ setup: raw.trim() })
+  } catch (e) { return c.json({ error: String(e) }, 502) }
+})
 
-事件类型：
-事件1：男主当面偏袒女二/无视女主的具体场景
-事件2：女二设局陷害女主被罚的完整经过
-事件3：家人（公婆/儿子/父母）当面指责女主
-事件4：公开场合女主被旁观者围观羞辱
+// Stage 3: male POV chase (6 scenes) + all turning/emotion tags
+app.post('/generate-outline/s3', async (c) => {
+  const { idea, perspective = '女主视角' } = await c.req.json()
+  if (!idea) return c.json({ error: '请输入你的点子' }, 400)
+  const base = c.env.AI_BASE_URL || 'https://api.anthropic.com'
+  try {
+    const raw = await outlineCallAI(base, c.env.AI_API_KEY,
+      '你是中文网文细纲策划专家。生成追妻火葬场阶段内容以及三个阶段的转折点和情绪点。',
+      `故事点子：「${idea}」\n视角：${perspective}\n\n按以下格式逐行输出，每个标签和它的内容在同一行：\n\n[S3]第三阶段铺垫（全程男主视角，女主已离开，6个场景，每场200字以上，场景间用---分隔）\n[TURN1]第一阶段转折点（60字内，渣男/女二让局势骤然恶化的行动，不写女主察觉真相）\n[EMOT1]情绪点①（格式：①场景→读者情绪 ②场景→情绪 ③场景→情绪）\n[TURN2]第二阶段转折点（60字内，女主离开的具体行动——拎包/买票/签字，不写发现真相）\n[EMOT2]情绪点②（格式：①场景→情绪 ②场景→情绪 ③场景→情绪）\n[TURN3]第三阶段转折点（60字内，真相在男主面前完全揭露）\n[EMOT3]情绪点③（格式：①男主追妻爽点 ②真相大白崩溃 ③最解气结局）`,
+      3000).then(outlineParseText)
 
-直接写正文，不要编号，不要标题，事件之间用「---」分隔：`, 4096).then(parseText),
-
-      // Stage 2: 4 abuse events + 1 emotional breaking point, each 500+ chars
-      callAI(sysPrompt, `${storyCtx}
-
-生成第二阶段铺垫（比第一阶段更惨，女主情感走向彻底死心）：5个事件，每个500字以上，事件间用「---」分隔。
-
-事件类型：
-事件1：女主身体或精神受到更深程度伤害
-事件2：女主向某人求助被拒绝/被反骂
-事件3：女主试图反抗，结果被更惨地对待
-事件4：虐到极致——某件具体的事让女主几乎崩溃
-事件5（小转折/心死时刻）：女主情感彻底死心的那一刻（不是发现真相，是心死了——被迫承受了某件无法挽回的事后，她不再抱有任何期望）
-
-直接写正文，不要编号，事件间用「---」分隔：`, 4096).then(parseText),
-
-      // Stage 3: male POV + turning points + emotion points
-      callAI('你是中文网文细纲策划专家。生成追妻火葬场阶段的内容：第三阶段铺垫全程男主视角，女主已离开，写6个男主找人/崩溃/发现真相/追妻被拒的场景，每场200字以上，场景间用---分隔。另外生成三个阶段的转折点和情绪点。',
-        `${storyCtx}
-
-生成以下内容：
-
-第三阶段铺垫（全程男主视角，女主已离开，写6个完整场景，每场200字以上，场景间用---分隔）：
-[S3]
-
-然后生成结构标签（每个标签一行，紧跟内容）：
-[TURN1]第一阶段转折点（60字内，渣男/女二的行动让局势骤然恶化，❌不写女主察觉真相）
-[EMOT1]情绪点①：①(场景→读者情绪) ②(场景→情绪) ③(场景→情绪)
-[TURN2]第二阶段转折点（60字内，写女主离开的行动——拎包/买票/签字/走人，❌不写发现真相）
-[EMOT2]情绪点②：①(场景→情绪) ②(场景→情绪) ③(场景→情绪)
-[TURN3]第三阶段转折点（60字内，真相在男主面前完全揭露）
-[EMOT3]情绪点③：①(男主追妻爽点) ②(真相大白崩溃) ③(最解气结局)`, 4096).then(parseText),
-    ])
-
-    // Parse stage 3 + meta from raw3
-    const getTag = (tag: string, text: string): string => {
-      const re = new RegExp(`\\[${tag}\\]([\\s\\S]*?)(?=\\n\\[[A-Z0-9A-Z-]+\\]|$)`)
-      const m = text.match(re)
+    const getTag = (tag: string): string => {
+      const re = new RegExp(`\\[${tag}\\]([\\s\\S]*?)(?=\\n\\[[A-Z0-9-]+\\]|$)`)
+      const m = raw.match(re)
       return m ? m[1].trim() : ''
     }
-    const s3Setup = getTag('S3', raw3)
-    const turn1   = getTag('TURN1', raw3)
-    const emot1   = getTag('EMOT1', raw3)
-    const turn2   = getTag('TURN2', raw3)
-    const emot2   = getTag('EMOT2', raw3)
-    const turn3   = getTag('TURN3', raw3)
-    const emot3   = getTag('EMOT3', raw3)
-
     return c.json({
-      outline: [
-        { segment: '前段', setup: raw1.trim(), turning: turn1, emotion: emot1 },
-        { segment: '中段', setup: raw2.trim(), turning: turn2, emotion: emot2 },
-        { segment: '后段', setup: s3Setup, turning: turn3, emotion: emot3 },
-      ],
+      setup:  getTag('S3'),
+      turn1:  getTag('TURN1'), emot1: getTag('EMOT1'),
+      turn2:  getTag('TURN2'), emot2: getTag('EMOT2'),
+      turn3:  getTag('TURN3'), emot3: getTag('EMOT3'),
     })
-  } catch (e) {
-    return c.json({ error: String(e) }, 502)
-  }
+  } catch (e) { return c.json({ error: String(e) }, 502) }
 })
 
 // ─── Five-Year Diary ────────────────────────────────────────────────────────

@@ -273,8 +273,20 @@ export const api = {
     deleteExercise: (id: string) => del(`/health/exercise/${id}`),
   },
   outline: {
-    generate: (data: { idea: string; perspective?: string }) =>
-      post<OutlineResult>('/generate-outline', data),
+    generate: async (data: { idea: string; perspective?: string }): Promise<OutlineResult> => {
+      const [r1, r2, r3] = await Promise.all([
+        post<{ setup: string }>('/generate-outline/s1', data),
+        post<{ setup: string }>('/generate-outline/s2', data),
+        post<{ setup: string; turn1: string; emot1: string; turn2: string; emot2: string; turn3: string; emot3: string }>('/generate-outline/s3', data),
+      ])
+      return {
+        outline: [
+          { segment: '前段', setup: r1.setup, turning: r3.turn1, emotion: r3.emot1 },
+          { segment: '中段', setup: r2.setup, turning: r3.turn2, emotion: r3.emot2 },
+          { segment: '后段', setup: r3.setup, turning: r3.turn3, emotion: r3.emot3 },
+        ],
+      }
+    },
   },
   diary: {
     getEntries: (date: string) => get<DiaryEntry[]>('/diary/entries', { date }),
