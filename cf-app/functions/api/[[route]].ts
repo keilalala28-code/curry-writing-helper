@@ -2563,31 +2563,23 @@ ${refSection}
 [BYSTANDERS]围观群众（20字内，无则写「无」）
 [EMOT-ELEM]情绪点要素与转折点（用1.2.分点列举，100字内）
 
-第一阶段铺垫（女主被虐，4个事件，每个事件写4-6句完整叙述，包含触发+对话+反应+女主处境）：
-[S1E1]男主明显把女二放在女主前面的场景（4-6句，含男主说的话）
-[S1E2]女二设局陷害，女主被罚（4-6句，含女二和男主的对话原话）
-[S1E3]公婆/儿子/家人当面指责女主（4-6句，含至少2句家人说的原话）
-[S1E4]公开场合女主被严重羞辱（4-6句，有旁观者在场）
-[S1TURN]第一阶段转折点——渣男/女二做了某件让局势恶化的行动（60字内，❌禁止写女主察觉任何真相）
-[S1EMOT]情绪点①：①(场景→读者情绪) ②(场景→情绪) ③(场景→情绪)
+第一阶段铺垫——用连续叙述的方式写，不要编号，不要标签，直接写故事正文，字数必须超过400字：
+[STORY-S1]包含4-5个场景：①男主偏袒女二/无视女主的场景（含男主说的话）②女二设局陷害女主被罚的场景（含对话）③公婆/儿子/家人当面指责女主的场景（含家人原话）④公开场合女主被严重羞辱的场景。每个场景4-6句，场景间自然过渡，写完整故事片段而非摘要，总字数必须超过400字。
 
-第二阶段铺垫（施害升级，4个事件，每个事件写4-6句完整叙述，比第一阶段更惨）：
-[S2E1]身体或精神受到更深程度伤害（4-6句，每句有具体细节）
-[S2E2]女主向某人求助，被拒绝或被反骂（4-6句，含求助对话原话）
-[S2E3]女主试图反抗，结果被更惨地对待（4-6句）
-[S2E4]压垮骆驼——女主情感彻底死心的那件事（4-6句，❌不是发现真相，是心死了）
-[S2TURN]第二阶段转折点——女主离开的那个动作（60字内，❌不写发现真相，只写离开行动）
-[S2EMOT]情绪点②：①(场景→读者情绪) ②(场景→情绪) ③(场景→情绪)
+[TURN1]第一阶段转折点（60字内，渣男/女二做了某件让局势恶化的行动，❌禁止写女主察觉任何真相）
+[EMOT1]情绪点①：①(场景→读者情绪) ②(场景→情绪) ③(场景→情绪)
 
-第三阶段追妻（女主已离开，全程男主视角，6个事件，每个事件写4-5句完整叙述）：
-[S3E1]男主回家发现空了——看到什么、第一反应、做了什么（4-5句，男主慌乱）
-[S3E2]男主疯狂找人——打给谁、被骂被拒绝、他的反应（4-5句，含对方骂他的话）
-[S3E3]男主外表变狼狈——状态描写，某人见到他的反应（4-5句）
-[S3E4]男主翻到触目惊心的东西——日记/B超单/录音/视频内容+崩溃细节（4-6句）
-[S3E5]男主找到女主——女主的冷漠态度、男主跪求、女主说的话（4-5句）
-[S3E6]男主发现女二阴谋——证据内容、男主对女二的崩溃反应（4-6句）
-[S3TURN]第三阶段转折点——真相在男主面前揭露（60字内）
-[S3EMOT]情绪点③：①(男主追妻爽点) ②(真相大白崩溃) ③(结局最解气)
+第二阶段铺垫——比第一阶段更惨，用连续叙述的方式写，不要编号，不要标签，字数必须超过400字：
+[STORY-S2]包含4-5个场景：①女主身体或精神受到更深程度伤害的场景（每句有具体细节）②女主向某人求助被拒绝/被反骂的场景（含求助对话原话）③女主试图反抗、结果被更惨地对待的场景④让女主情感彻底死心的最后一根稻草场景（❌不是发现真相，是心死了，是被虐到极致）。每个场景4-6句，场景间自然过渡，总字数必须超过400字。
+
+[TURN2]第二阶段转折点（60字内，写女主离开的行动，❌不写发现真相）
+[EMOT2]情绪点②：①(场景→读者情绪) ②(场景→情绪) ③(场景→情绪)
+
+第三阶段追妻——女主已离开，全程男主视角，用连续叙述的方式写，不要编号，字数必须超过400字：
+[STORY-S3]⚠️所有内容从男主角度写，女主在场景里只是冷漠拒绝，不主动做任何事。包含6个场景：①男主回家发现空了（他的慌乱和不相信）②男主疯狂找人被骂被拒（含对方骂他的话）③男主外表变得狼狈（状态崩溃的描写）④男主翻到触目惊心的东西——日记/B超单/录音/视频的具体内容，他当场崩溃⑤男主找到女主，女主态度冷漠拒绝，男主跪求痛哭⑥男主发现女二阴谋的全貌，对女二清算崩溃。每个场景4-5句，场景间自然过渡，总字数必须超过400字。
+
+[TURN3]第三阶段转折点（60字内，真相在男主面前揭露）
+[EMOT3]情绪点③：①(男主追妻爽点) ②(真相大白崩溃) ③(结局最解气)
 [UP]上行情绪：1.(节点) 2.(节点) 3.(节点)
 [DOWN]下行情绪：1.(节点) 2.(节点) 3.(节点)`
 
@@ -2616,12 +2608,10 @@ ${refSection}
     try {
       // Parse tagged output format [TAGNAME]content
       const getTag = (tag: string): string => {
-        const re = new RegExp(`\\[${tag}\\]([\\s\\S]*?)(?=\\n\\[[A-Z0-9-]+\\]|$)`)
+        const re = new RegExp(`\\[${tag}\\]([\\s\\S]*?)(?=\\n\\[[A-Z0-9A-Z-]+\\]|$)`)
         const m = raw.match(re)
         return m ? m[1].trim() : ''
       }
-      const makeSetup = (events: string[]): string =>
-        events.filter(e => e && e.trim() !== '无').map((e, i) => `${'①②③④⑤⑥'[i]}${e}`).join('\n')
       const result = {
         summary: getTag('SUMMARY'),
         structure: { qi: getTag('QI'), cheng: getTag('CHENG'), zhuan: getTag('ZHUAN'), he: getTag('HE') },
@@ -2629,9 +2619,9 @@ ${refSection}
         characters: { protagonist: getTag('PROTAGONIST'), antagonist: getTag('ANTAGONIST'), bystanders: getTag('BYSTANDERS') },
         emotion_elements: getTag('EMOT-ELEM'),
         outline: [
-          { segment: '前段', setup: makeSetup([getTag('S1E1'), getTag('S1E2'), getTag('S1E3'), getTag('S1E4')]), turning: getTag('S1TURN'), emotion: getTag('S1EMOT') },
-          { segment: '中段', setup: makeSetup([getTag('S2E1'), getTag('S2E2'), getTag('S2E3'), getTag('S2E4')]), turning: getTag('S2TURN'), emotion: getTag('S2EMOT') },
-          { segment: '后段', setup: makeSetup([getTag('S3E1'), getTag('S3E2'), getTag('S3E3'), getTag('S3E4'), getTag('S3E5'), getTag('S3E6')]), turning: getTag('S3TURN'), emotion: getTag('S3EMOT') },
+          { segment: '前段', setup: getTag('STORY-S1'), turning: getTag('TURN1'), emotion: getTag('EMOT1') },
+          { segment: '中段', setup: getTag('STORY-S2'), turning: getTag('TURN2'), emotion: getTag('EMOT2') },
+          { segment: '后段', setup: getTag('STORY-S3'), turning: getTag('TURN3'), emotion: getTag('EMOT3') },
         ],
         emotion_arc: { up: getTag('UP'), down: getTag('DOWN') },
       }
