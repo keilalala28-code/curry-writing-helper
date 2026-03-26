@@ -1,0 +1,32 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: cf-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: cf-app
+        run: npm ci
+
+      - name: Build
+        working-directory: cf-app
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        working-directory: cf-app
+        run: npx wrangler pages deploy dist --project-name=carly-assistant
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
