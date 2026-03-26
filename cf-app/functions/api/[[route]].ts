@@ -2347,11 +2347,11 @@ app.delete('/health/exercise/:id', async (c) => {
 
 const OUTLINE_SYS = '你是中文网文细纲策划专家，专门生成"被虐离开→男主追妻"型故事的铺垫事件。每个事件必须：①500字以上②包含具体触发行为③包含至少2句对话原文（用「」）④包含其他角色的连锁反应⑤写出女主被迫承受的结果。禁止写一句话摘要，禁止写编号列表，每个事件是完整的叙述段落。'
 
-function outlineCallAI(baseUrl: string, apiKey: string, system: string, user: string, maxTok: number) {
+function outlineCallAI(baseUrl: string, apiKey: string, model: string, system: string, user: string, maxTok: number) {
   return fetch(`${baseUrl}/v1/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: maxTok, system, messages: [{ role: 'user', content: user }] }),
+    body: JSON.stringify({ model, max_tokens: maxTok, system, messages: [{ role: 'user', content: user }] }),
   })
 }
 
@@ -2366,8 +2366,9 @@ app.post('/generate-outline/s1', async (c) => {
   const { idea, perspective = '女主视角' } = await c.req.json()
   if (!idea) return c.json({ error: '请输入你的点子' }, 400)
   const base = c.env.AI_BASE_URL || 'https://api.anthropic.com'
+  const model = c.env.AI_MODEL || 'claude-opus-4-5-20251101'
   try {
-    const raw = await outlineCallAI(base, c.env.AI_API_KEY, OUTLINE_SYS,
+    const raw = await outlineCallAI(base, c.env.AI_API_KEY, model, OUTLINE_SYS,
       `故事点子：「${idea}」\n视角：${perspective}\n\n生成第一阶段铺垫（女主被虐，全程无察觉，无策略）：4个事件，每个写完整叙述段落，500字以上，事件间用「---」分隔。\n\n事件1：男主当面偏袒女二/无视女主的具体场景\n事件2：女二设局陷害女主被罚的完整经过\n事件3：家人（公婆/儿子/父母）当面指责女主\n事件4：公开场合女主被旁观者围观羞辱\n\n直接写正文，不要编号，不要标题，事件之间用「---」分隔：`,
       3500).then(outlineParseText)
     return c.json({ setup: raw.trim() })
@@ -2379,8 +2380,9 @@ app.post('/generate-outline/s2', async (c) => {
   const { idea, perspective = '女主视角' } = await c.req.json()
   if (!idea) return c.json({ error: '请输入你的点子' }, 400)
   const base = c.env.AI_BASE_URL || 'https://api.anthropic.com'
+  const model = c.env.AI_MODEL || 'claude-opus-4-5-20251101'
   try {
-    const raw = await outlineCallAI(base, c.env.AI_API_KEY, OUTLINE_SYS,
+    const raw = await outlineCallAI(base, c.env.AI_API_KEY, model, OUTLINE_SYS,
       `故事点子：「${idea}」\n视角：${perspective}\n\n生成第二阶段铺垫（比第一阶段更惨，女主情感走向彻底死心）：5个事件，每个500字以上，事件间用「---」分隔。\n\n事件1：女主身体或精神受到更深程度伤害\n事件2：女主向某人求助被拒绝/被反骂\n事件3：女主试图反抗，结果被更惨地对待\n事件4：虐到极致——某件具体的事让女主几乎崩溃\n事件5（心死时刻）：女主情感彻底死心的那一刻（不是发现真相，是心死了——被迫承受了某件无法挽回的事后，她不再抱有任何期望）\n\n直接写正文，不要编号，事件间用「---」分隔：`,
       4096).then(outlineParseText)
     return c.json({ setup: raw.trim() })
@@ -2392,8 +2394,9 @@ app.post('/generate-outline/s3', async (c) => {
   const { idea, perspective = '女主视角' } = await c.req.json()
   if (!idea) return c.json({ error: '请输入你的点子' }, 400)
   const base = c.env.AI_BASE_URL || 'https://api.anthropic.com'
+  const model = c.env.AI_MODEL || 'claude-opus-4-5-20251101'
   try {
-    const raw = await outlineCallAI(base, c.env.AI_API_KEY,
+    const raw = await outlineCallAI(base, c.env.AI_API_KEY, model,
       '你是中文网文细纲策划专家。生成追妻火葬场阶段内容以及三个阶段的转折点和情绪点。',
       `故事点子：「${idea}」\n视角：${perspective}\n\n按以下格式逐行输出，每个标签和它的内容在同一行：\n\n[S3]第三阶段铺垫（全程男主视角，女主已离开，6个场景，每场200字以上，场景间用---分隔）\n[TURN1]第一阶段转折点（60字内，渣男/女二让局势骤然恶化的行动，不写女主察觉真相）\n[EMOT1]情绪点①（格式：①场景→读者情绪 ②场景→情绪 ③场景→情绪）\n[TURN2]第二阶段转折点（60字内，女主离开的具体行动——拎包/买票/签字，不写发现真相）\n[EMOT2]情绪点②（格式：①场景→情绪 ②场景→情绪 ③场景→情绪）\n[TURN3]第三阶段转折点（60字内，真相在男主面前完全揭露）\n[EMOT3]情绪点③（格式：①男主追妻爽点 ②真相大白崩溃 ③最解气结局）`,
       3000).then(outlineParseText)
