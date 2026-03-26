@@ -1,4 +1,4 @@
-const CACHE_NAME = 'curry-assistant-v1'
+const CACHE_NAME = 'curry-assistant-v2'
 
 // 安装时缓存核心静态资源
 self.addEventListener('install', (event) => {
