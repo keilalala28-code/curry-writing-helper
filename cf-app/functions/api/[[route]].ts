@@ -2352,7 +2352,8 @@ app.post('/generate-outline', async (c) => {
   const db = c.env.DB
   const baseUrl = c.env.AI_BASE_URL || 'https://api.anthropic.com'
   const apiKey  = c.env.AI_API_KEY
-  const model   = c.env.AI_MODEL || 'claude-opus-4-5-20251101'
+  // Use Haiku for outline: ~200 tokens/s keeps response under Cloudflare's 30s timeout
+  const model   = 'claude-haiku-4-5-20251001'
 
   // ── 从文章库提取参考：10篇 hooks 学爆点规律 + 2篇最相关正文节选示范情节密度 ─
   type ArtRow = { id: string; title: string; content: string }
