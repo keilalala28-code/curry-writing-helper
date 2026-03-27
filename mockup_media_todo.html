@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自媒体卡片 - To-Do 设计效果图</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 40px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #e74c3c;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 40px;
+    }
+
+    .comparison {
+      display: flex;
+      gap: 60px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 60px;
+    }
+
+    .version {
+      text-align: center;
+    }
+
+    .version h3 {
+      margin-bottom: 16px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* 卡片基础样式 */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      width: 280px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border: 2px solid transparent;
+      text-align: left;
+    }
+
+    .card.active {
+      border-color: #e74c3c;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .status-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      background: #fff3e6;
+      color: #f5a623;
+    }
+
+    /* ========== 新设计样式 ========== */
+
+    /* 时间信息 */
+    .time-info {
+      display: flex;
+      gap: 16px;
+      margin: 12px 0;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .time-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .time-item .icon {
+      font-size: 14px;
+    }
+
+    /* 进度条 */
+    .progress-section {
+      margin: 12px 0;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .progress-label {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .progress-count {
+      font-size: 12px;
+      color: #e74c3c;
+      font-weight: 600;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: #f0f0f0;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e74c3c, #f5a623);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    /* To-Do 列表 */
+    .todo-list {
+      margin-top: 12px;
+      border-top: 1px solid #f0f0f0;
+      padding-top: 12px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+
+    .todo-checkbox {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .todo-checkbox.checked {
+      background: #e74c3c;
+      border-color: #e74c3c;
+      color: white;
+      font-size: 10px;
+    }
+
+    .todo-text {
+      color: #333;
+    }
+
+    .todo-text.done {
+      color: #999;
+      text-decoration: line-through;
+    }
+
+    /* ========== 方案对比区域 ========== */
+    .options-section {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .options-title {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+    }
+
+    .option-box {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    .option-box h4 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #e74c3c;
+    }
+
+    .option-box p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .option-box .card {
+      margin: 0 auto;
+    }
+
+    /* 方案A：简洁版 - 只显示进度数字 */
+    .card-simple .todo-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .todo-summary .label {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .todo-summary .count {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e74c3c;
+    }
+
+    /* 方案B：带展开的 to-do */
+    .todo-expand-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 8px 0;
+      cursor: pointer;
+      font-size: 12px;
+      color: #666;
+      border-top: 1px solid #f0f0f0;
+      margin-top: 12px;
+    }
+
+    .todo-expand-btn:hover {
+      color: #e74c3c;
+    }
+
+    .expand-icon {
+      font-size: 10px;
+    }
+
+    /* 推荐标签 */
+    .recommend-tag {
+      background: #e74c3c;
+      color: white;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+    }
+
+    /* 说明文字 */
+    .notes {
+      max-width: 800px;
+      margin: 40px auto 0;
+      background: #fff9e6;
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 4px solid #f5a623;
+    }
+
+    .notes h4 {
+      margin-bottom: 12px;
+      color: #333;
+    }
+
+    .notes ul {
+      padding-left: 20px;
+      font-size: 14px;
+      color: #666;
+      line-height: 1.8;
+    }
+
+    /* 紧凑版 todo */
+    .todo-compact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .todo-compact-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 3px 8px;
+      background: #f8f8f8;
+      border-radius: 12px;
+      color: #666;
+    }
+
+    .todo-compact-item.done {
+      background: #e8f5e9;
+      color: #4caf50;
+    }
+
+    .todo-compact-item .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ddd;
+    }
+
+    .todo-compact-item.done .dot {
+      background: #4caf50;
+    }
+  </style>
+</head>
+<body>
+  <h1>自媒体项目卡片 - 新设计效果图</h1>
+  <p class="subtitle">增加 To-Do 子任务、进度、开始/结束时间</p>
+
+  <!-- 前后对比 -->
+  <div class="comparison">
+    <div class="version">
+      <h3>原来的样式</h3>
+      <div class="card">
+        <div class="card-title">首尔旅行vlog</div>
+        <span class="status-tag">制作中</span>
+      </div>
+    </div>
+
+    <div class="version">
+      <h3>→</h3>
+      <div style="font-size: 48px; margin-top: 60px;">➡️</div>
+    </div>
+
+    <div class="version">
+      <h3>新设计（推荐方案）</h3>
+      <div class="card active">
+        <div class="card-title">首尔旅行vlog</div>
+        <span class="status-tag">制作中</span>
+
+        <!-- 时间 -->
+        <div class="time-info">
+          <div class="time-item">
+            <span class="icon">📅</span>
+            <span>3/20 - 3/28</span>
+          </div>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="progress-section">
+          <div class="progress-header">
+            <span class="progress-label">进度</span>
+            <span class="progress-count">2/4</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 50%"></div>
+          </div>
+        </div>
+
+        <!-- To-Do 列表 -->
+        <div class="todo-list">
+          <div class="todo-item">
+            <div class="todo-checkbox checked">✓</div>
+            <span class="todo-text done">写脚本</span>
+          </div>
+          <div class="todo-item">
+            <div class="todo-checkbox checked">✓</div>
+            <span class="todo-text done">剪辑</span>
+          </div>
+          <div class="todo-item">
+            <div class="todo-checkbox"></div>
+            <span class="todo-text">配音</span>
+          </div>
+          <div class="todo-item">
+            <div class="todo-checkbox"></div>
+            <span class="todo-text">调色出片</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 三种方案对比 -->
+  <div class="options-section">
+    <h3 class="options-title">📐 三种 To-Do 展示方案对比</h3>
+
+    <div class="options-grid">
+      <!-- 方案A -->
+      <div class="option-box">
+        <h4>方案 A：极简版</h4>
+        <p>只显示进度数字 + 进度条，不显示具体 to-do 内容。<br>点击卡片后在弹窗中管理 to-do。</p>
+        <div class="card card-simple">
+          <div class="card-title">首尔旅行vlog</div>
+          <span class="status-tag">制作中</span>
+          <div class="time-info">
+            <div class="time-item">
+              <span class="icon">📅</span>
+              <span>3/20 - 3/28</span>
+            </div>
+          </div>
+          <div class="todo-summary">
+            <span class="label">待办进度</span>
+            <span class="count">2/4 ✓</span>
+          </div>
+          <div class="progress-bar" style="margin-top: 8px;">
+            <div class="progress-fill" style="width: 50%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 方案B -->
+      <div class="option-box">
+        <h4>方案 B：紧凑标签版 <span class="recommend-tag">推荐</span></h4>
+        <p>用小标签显示每个 to-do，完成的变绿。<br>一眼看清进度，又不会占太多空间。</p>
+        <div class="card">
+          <div class="card-title">首尔旅行vlog</div>
+          <span class="status-tag">制作中</span>
+          <div class="time-info">
+            <div class="time-item">
+              <span class="icon">📅</span>
+              <span>3/20 - 3/28</span>
+            </div>
+          </div>
+          <div class="progress-section">
+            <div class="progress-header">
+              <span class="progress-label">进度</span>
+              <span class="progress-count">2/4</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 50%"></div>
+            </div>
+          </div>
+          <div class="todo-compact">
+            <span class="todo-compact-item done"><span class="dot"></span>写脚本</span>
+            <span class="todo-compact-item done"><span class="dot"></span>剪辑</span>
+            <span class="todo-compact-item"><span class="dot"></span>配音</span>
+            <span class="todo-compact-item"><span class="dot"></span>调色</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 方案C -->
+      <div class="option-box">
+        <h4>方案 C：完整列表版</h4>
+        <p>显示完整的 to-do 列表带勾选框。<br>信息最完整，但卡片会比较长。</p>
+        <div class="card">
+          <div class="card-title">首尔旅行vlog</div>
+          <span class="status-tag">制作中</span>
+          <div class="time-info">
+            <div class="time-item">
+              <span class="icon">📅</span>
+              <span>3/20 - 3/28</span>
+            </div>
+          </div>
+          <div class="progress-section">
+            <div class="progress-header">
+              <span class="progress-label">进度</span>
+              <span class="progress-count">2/4</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 50%"></div>
+            </div>
+          </div>
+          <div class="todo-list">
+            <div class="todo-item">
+              <div class="todo-checkbox checked">✓</div>
+              <span class="todo-text done">写脚本</span>
+            </div>
+            <div class="todo-item">
+              <div class="todo-checkbox checked">✓</div>
+              <span class="todo-text done">剪辑</span>
+            </div>
+            <div class="todo-item">
+              <div class="todo-checkbox"></div>
+              <span class="todo-text">配音</span>
+            </div>
+            <div class="todo-item">
+              <div class="todo-checkbox"></div>
+              <span class="todo-text">调色出片</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 说明 -->
+  <div class="notes">
+    <h4>💡 设计说明</h4>
+    <ul>
+      <li><strong>时间</strong>：显示 开始日期 - 截止日期，简洁的格式如 "3/20 - 3/28"</li>
+      <li><strong>进度条</strong>：根据 to-do 完成数量自动计算，渐变色增加视觉吸引力</li>
+      <li><strong>To-Do</strong>：每个项目可以添加多个子任务，完成后打勾</li>
+      <li><strong>推荐方案 B</strong>：平衡了信息量和空间占用，一眼就能看到哪些做了哪些没做</li>
+    </ul>
+  </div>
+</body>
+</html>

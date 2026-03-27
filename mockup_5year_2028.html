@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五年日记 — 2028年视角效果图</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif; background: #f9fafb; color: #111; }
+
+.shell { display: flex; min-height: 100vh; }
+.sidebar { width: 196px; background: #fff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-brand { padding: 14px 16px; border-bottom: 1px solid #f3f4f6; }
+.sidebar-brand h1 { font-size: 17px; font-weight: 700; color: #e85d5d; }
+.sidebar-brand p { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.sidebar-nav { flex: 1; padding: 8px; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 9px; font-size: 13px; font-weight: 500; color: #6b7280; margin-bottom: 2px; }
+.nav-item.active { background: #fff1f1; color: #e85d5d; }
+
+.content { flex: 1; padding: 24px; max-width: 820px; }
+
+/* Scene switcher */
+.scene-bar { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px 14px; margin-bottom: 20px; }
+.scene-bar span { font-size: 12px; color: #9ca3af; margin-right: 4px; }
+.sc-btn { padding: 5px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: none; background: #f3f4f6; color: #6b7280; cursor: pointer; }
+.sc-btn.on { background: #e85d5d; color: #fff; }
+.sc-note { font-size: 11px; color: #9ca3af; margin-left: auto; }
+
+/* Page header */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.page-header h1 { font-size: 22px; font-weight: 700; color: #111; }
+.page-header p { font-size: 12px; color: #9ca3af; margin-top: 3px; }
+.year-chip { font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 99px; background: #fff1f1; color: #e85d5d; border: 1.5px solid #fca5a5; }
+
+/* View toggle */
+.view-toggle { display: flex; background: #f3f4f6; border-radius: 9px; padding: 3px; width: fit-content; margin-bottom: 18px; }
+.vt { padding: 5px 18px; border-radius: 7px; font-size: 12px; font-weight: 500; color: #6b7280; border: none; background: none; cursor: pointer; }
+.vt.active { background: #fff; color: #e85d5d; box-shadow: 0 1px 2px rgba(0,0,0,.08); font-weight: 600; }
+
+/* Summary */
+.summary-banner { display: flex; gap: 10px; margin-bottom: 18px; }
+.sb-card { flex: 1; background: #fff; border: 1px solid #f3f4f6; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; align-items: center; }
+.sb-card .sn { font-size: 22px; font-weight: 800; }
+.sb-card .sl { font-size: 10px; color: #9ca3af; margin-top: 3px; }
+.sb-card.hl { border-color: #fca5a5; background: linear-gradient(135deg,#fff1f1,#fff8f8); }
+.sb-card.hl .sn { color: #e85d5d; }
+.progress-ring { flex: 1; display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #f3f4f6; border-radius: 14px; padding: 14px 20px; }
+.ring-wrap { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #e85d5d; }
+.ring-info .ri-t { font-size: 13px; font-weight: 700; color: #374151; }
+.ring-info .ri-s { font-size: 11px; color: #9ca3af; margin-top: 3px; line-height: 1.5; }
+
+/* Date nav */
+.date-nav { display: flex; align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.04); margin-bottom: 16px; }
+.dn-btn { width: 42px; height: 54px; border: none; background: none; cursor: pointer; font-size: 18px; color: #6b7280; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dn-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6; padding: 6px 0; }
+.dn-big { font-size: 20px; font-weight: 800; color: #111; }
+.dn-sub { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+.dn-right { display: flex; align-items: center; gap: 8px; padding: 0 14px; flex-shrink: 0; }
+.dn-right label { font-size: 11px; color: #9ca3af; }
+.dn-input { border: 1px solid #e5e7eb; border-radius: 7px; padding: 5px 8px; font-size: 12px; color: #374151; background: #f9fafb; width: 110px; font-family: inherit; }
+.today-chip { padding: 4px 10px; border-radius: 7px; font-size: 12px; font-weight: 600; color: #e85d5d; background: #fff1f1; border: none; cursor: pointer; }
+
+/* Mood row */
+.mood-row { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #f3f4f6; border-radius: 12px; padding: 10px 16px; margin-bottom: 14px; }
+.mood-label { font-size: 12px; color: #9ca3af; margin-right: 4px; }
+.mood-chip { padding: 4px 10px; border-radius: 99px; font-size: 12px; cursor: pointer; border: 1.5px solid transparent; }
+.mood-chip.selected { border-color: #e85d5d; background: #fff1f1; }
+.mood-sep { width: 1px; height: 20px; background: #f3f4f6; margin: 0 4px; }
+.weather-chip { padding: 4px 10px; border-radius: 99px; font-size: 12px; cursor: pointer; border: 1.5px solid transparent; }
+.weather-chip.selected { border-color: #3b82f6; background: #eff6ff; }
+
+/* Year cards */
+.year-list { display: flex; flex-direction: column; gap: 10px; }
+
+.ycard { border-radius: 16px; border: 1px solid #f0f0f0; background: #fff; overflow: hidden; }
+.ycard.cur { border-color: #fca5a5; box-shadow: 0 0 0 2px #fee2e2; }
+.ycard.has { border-color: #dbeafe; }
+.ycard.fut { opacity: .78; }
+
+.ycard-head { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid #f9fafb; }
+.ycard.cur .ycard-head { background: linear-gradient(135deg,#fff1f1,#fff8f8); border-bottom-color:#fee2e2; }
+.ycard.has .ycard-head { background: linear-gradient(135deg,#f0f6ff,#f8faff); border-bottom-color:#dbeafe; }
+.ycard.fut .ycard-head { background: #fafafa; }
+
+.yr-num { font-size: 17px; font-weight: 800; }
+.ycard.cur .yr-num { color: #e85d5d; }
+.ycard.has .yr-num { color: #2563eb; }
+.ycard.fut .yr-num { color: #9ca3af; }
+
+.yr-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+.tag-cur { background: #fee2e2; color: #e85d5d; }
+.tag-has { background: #dbeafe; color: #2563eb; }
+.tag-fut { background: #f3f4f6; color: #9ca3af; font-weight: 400; }
+
+.yr-meta { margin-left: auto; font-size: 11px; color: #9ca3af; display: flex; align-items: center; gap: 8px; }
+.save-ok { font-size: 11px; color: #22c55e; }
+.edit-btn { font-size: 11px; color: #9ca3af; background: #f3f4f6; border: none; padding: 3px 9px; border-radius: 6px; cursor: pointer; }
+
+.ycard-body { padding: 14px 16px; }
+.diary-ta { width: 100%; border: none; background: transparent; resize: none; font-size: 13.5px; line-height: 1.8; color: #374151; font-family: inherit; outline: none; min-height: 72px; }
+.diary-ta::placeholder { color: #d1d5db; }
+.entry-txt { font-size: 13.5px; line-height: 1.8; color: #374151; white-space: pre-wrap; }
+.entry-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 1px solid #f3f4f6; }
+.entry-time { font-size: 11px; color: #9ca3af; }
+
+.fut-prompt { font-size: 13px; color: #d1d5db; padding: 4px 0; line-height: 1.8; }
+.fut-link { color: #fca5a5; cursor: pointer; font-weight: 500; }
+
+/* ★ 期许回顾区块 — 核心设计 */
+.wish-block {
+  background: linear-gradient(135deg, #fefce8, #fffbeb);
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  position: relative;
+}
+.wish-block::before {
+  content: '"';
+  position: absolute;
+  top: 6px; left: 12px;
+  font-size: 36px;
+  color: #fbbf24;
+  opacity: .35;
+  line-height: 1;
+  font-family: Georgia, serif;
+}
+.wish-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.wish-from-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 3px 9px;
+  border-radius: 99px;
+  letter-spacing: .02em;
+}
+.wish-label {
+  font-size: 12px;
+  color: #92400e;
+  opacity: .7;
+}
+.wish-text {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: #78350f;
+  font-style: italic;
+  padding-left: 4px;
+}
+.wish-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 12px;
+}
+.wish-divider::before,
+.wish-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #fde68a, transparent);
+}
+.wish-divider span {
+  font-size: 11px;
+  color: #b45309;
+  white-space: nowrap;
+  background: #fffbeb;
+  padding: 0 4px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.reality-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e85d5d;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.reality-label .dot { width: 6px; height: 6px; border-radius: 50%; background: #e85d5d; }
+
+/* Recent strip */
+.recent-strip { background: #fff; border: 1px solid #f3f4f6; border-radius: 14px; padding: 14px 18px; margin-top: 16px; }
+.rs-title { font-size: 12px; font-weight: 600; color: #9ca3af; letter-spacing: .04em; margin-bottom: 10px; }
+.rs-list { display: flex; gap: 6px; flex-wrap: wrap; }
+.rs-chip { padding: 5px 12px; border-radius: 99px; font-size: 12px; font-weight: 500; background: #f3f4f6; color: #6b7280; cursor: pointer; border: 1px solid transparent; }
+.rs-chip.today { background: #fff1f1; color: #e85d5d; border-color: #fca5a5; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand"><h1>🍛 咖喱小助手</h1><p>写作资源管理库</p></div>
+    <nav class="sidebar-nav">
+      <div class="nav-item">🎯 每日灵感</div>
+      <div class="nav-item">✍️ 码字</div>
+      <div class="nav-item">📅 日常</div>
+      <div class="nav-item">📱 自媒体</div>
+      <div class="nav-item active">📓 五年日记</div>
+    </nav>
+  </div>
+
+  <div class="content">
+
+    <!-- Scene switcher -->
+    <div class="scene-bar">
+      <span>视角切换：</span>
+      <button class="sc-btn on" onclick="showScene('2026')">2026年写期许时</button>
+      <button class="sc-btn" onclick="showScene('2028')">2028年看到期许时</button>
+      <span class="sc-note">← 点击对比两个视角的差异</span>
+    </div>
+
+    <!-- ══ 2026年视角 ══ -->
+    <div id="sc-2026">
+      <div class="page-header">
+        <div>
+          <h1>📓 五年日记</h1>
+          <p>同一天，五年的你，在做什么</p>
+        </div>
+        <span class="year-chip">现在是 2026年</span>
+      </div>
+
+      <div class="view-toggle">
+        <button class="vt active">按日查看</button>
+        <button class="vt">日历回顾</button>
+      </div>
+
+      <div class="summary-banner">
+        <div class="sb-card hl"><div class="sn">1/5</div><div class="sl">今日已记录年份</div></div>
+        <div class="sb-card"><div class="sn" style="color:#2563eb">38</div><div class="sl">今年累计记录天</div></div>
+        <div class="sb-card"><div class="sn" style="color:#16a34a">12</div><div class="sl">连续记录天数</div></div>
+        <div class="progress-ring">
+          <div class="ring-wrap">
+            <svg width="52" height="52" viewBox="0 0 52 52">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#f3f4f6" stroke-width="5"/>
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#e85d5d" stroke-width="5"
+                stroke-dasharray="138.2" stroke-dashoffset="103.6" stroke-linecap="round"/>
+            </svg>
+            <div class="ring-center">25%</div>
+          </div>
+          <div class="ring-info">
+            <div class="ri-t">🔥 连续 12 天</div>
+            <div class="ri-s">本月 <b style="color:#e85d5d">24/31</b> 天<br>五年进度 <b style="color:#e85d5d">25%</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="date-nav">
+        <button class="dn-btn">‹</button>
+        <div class="dn-center"><div class="dn-big">3月24日</div><div class="dn-sub">周二 · 今天</div></div>
+        <button class="dn-btn">›</button>
+        <div class="dn-right">
+          <label>跳转</label>
+          <input type="date" class="dn-input" value="2026-03-24">
+          <button class="today-chip">回到今天</button>
+        </div>
+      </div>
+
+      <div class="mood-row">
+        <span class="mood-label">今日心情</span>
+        <span class="mood-chip selected">🥰 开心</span>
+        <span class="mood-chip">😌 平静</span>
+        <span class="mood-chip">😔 低落</span>
+        <span class="mood-chip">😤 烦躁</span>
+        <span class="mood-chip">🤩 亢奋</span>
+        <div class="mood-sep"></div>
+        <span style="font-size:12px;color:#9ca3af;margin-right:4px">天气</span>
+        <span class="weather-chip selected">☀️ 晴</span>
+        <span class="weather-chip">🌧 雨</span>
+      </div>
+
+      <div class="year-list">
+        <!-- 2026 今年 -->
+        <div class="ycard cur">
+          <div class="ycard-head">
+            <span class="yr-num">2026</span>
+            <span class="yr-tag tag-cur">今年</span>
+            <div class="yr-meta"><span style="font-size:11px;color:#9ca3af">108字</span><span class="save-ok">✓ 已保存</span></div>
+          </div>
+          <div class="ycard-body">
+            <textarea class="diary-ta" rows="3">今天终于把个人规划的功能做完了，月计划和年计划的设计感觉挺顺的。下午喝了两杯咖啡，有点睡不着。晚上看了一集《文学的日常》，很治愈。</textarea>
+          </div>
+        </div>
+
+        <!-- 2027 未来 -->
+        <div class="ycard fut">
+          <div class="ycard-head">
+            <span class="yr-num">2027</span>
+            <span class="yr-tag tag-fut">未来</span>
+          </div>
+          <div class="ycard-body">
+            <div class="fut-prompt">2027年的今天还没到，<span class="fut-link">写下对这一天的期许？</span></div>
+          </div>
+        </div>
+
+        <!-- 2028 未来·已写期许 ★ -->
+        <div class="ycard fut">
+          <div class="ycard-head">
+            <span class="yr-num">2028</span>
+            <span class="yr-tag tag-fut">未来 · 已写期许</span>
+          </div>
+          <div class="ycard-body">
+            <textarea class="diary-ta" rows="2">希望到那时候已经出版了第一本书，在某个安静的小镇有自己的工作室。</textarea>
+            <div style="font-size:11px;color:#d1d5db;text-align:right;margin-top:4px">这段话会在2028年3月24日展示给你 ↗</div>
+          </div>
+        </div>
+
+        <!-- 2029 2030 -->
+        <div class="ycard fut">
+          <div class="ycard-head"><span class="yr-num">2029</span><span class="yr-tag tag-fut">未来</span></div>
+          <div class="ycard-body"><div class="fut-prompt">2029年的今天还没到，<span class="fut-link">写下期许？</span></div></div>
+        </div>
+        <div class="ycard fut">
+          <div class="ycard-head"><span class="yr-num">2030</span><span class="yr-tag tag-fut">未来</span></div>
+          <div class="ycard-body"><div class="fut-prompt">2030年的今天还没到，<span class="fut-link">写下期许？</span></div></div>
+        </div>
+      </div>
+
+      <div class="recent-strip">
+        <div class="rs-title">最近写过的日子</div>
+        <div class="rs-list">
+          <span class="rs-chip today">3/24 今天</span>
+          <span class="rs-chip">3/23</span><span class="rs-chip">3/22</span>
+          <span class="rs-chip">3/21</span><span class="rs-chip">3/20</span>
+          <span class="rs-chip">3/18</span><span class="rs-chip">3/15</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 2028年视角 ══ -->
+    <div id="sc-2028" style="display:none">
+      <div class="page-header">
+        <div>
+          <h1>📓 五年日记</h1>
+          <p>同一天，五年的你，在做什么</p>
+        </div>
+        <span class="year-chip">现在是 2028年</span>
+      </div>
+
+      <div class="view-toggle">
+        <button class="vt active">按日查看</button>
+        <button class="vt">日历回顾</button>
+      </div>
+
+      <div class="summary-banner">
+        <div class="sb-card hl"><div class="sn">2/5</div><div class="sl">今日已记录年份</div></div>
+        <div class="sb-card"><div class="sn" style="color:#2563eb">52</div><div class="sl">今年累计记录天</div></div>
+        <div class="sb-card"><div class="sn" style="color:#16a34a">7</div><div class="sl">连续记录天数</div></div>
+        <div class="progress-ring">
+          <div class="ring-wrap">
+            <svg width="52" height="52" viewBox="0 0 52 52">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#f3f4f6" stroke-width="5"/>
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#e85d5d" stroke-width="5"
+                stroke-dasharray="138.2" stroke-dashoffset="69.1" stroke-linecap="round"/>
+            </svg>
+            <div class="ring-center">50%</div>
+          </div>
+          <div class="ring-info">
+            <div class="ri-t">🔥 连续 7 天</div>
+            <div class="ri-s">本月 <b style="color:#e85d5d">24/31</b> 天<br>五年进度 <b style="color:#e85d5d">50%</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="date-nav">
+        <button class="dn-btn">‹</button>
+        <div class="dn-center"><div class="dn-big">3月24日</div><div class="dn-sub">周六 · 今天</div></div>
+        <button class="dn-btn">›</button>
+        <div class="dn-right">
+          <label>跳转</label>
+          <input type="date" class="dn-input" value="2028-03-24">
+          <button class="today-chip">回到今天</button>
+        </div>
+      </div>
+
+      <div class="mood-row">
+        <span class="mood-label">今日心情</span>
+        <span class="mood-chip">🥰 开心</span>
+        <span class="mood-chip selected">😌 平静</span>
+        <span class="mood-chip">😔 低落</span>
+        <span class="mood-chip">😤 烦躁</span>
+        <span class="mood-chip">🤩 亢奋</span>
+        <div class="mood-sep"></div>
+        <span style="font-size:12px;color:#9ca3af;margin-right:4px">天气</span>
+        <span class="weather-chip">☀️ 晴</span>
+        <span class="weather-chip selected">🌤 多云</span>
+      </div>
+
+      <div class="year-list">
+
+        <!-- 2026 过去·有记录 -->
+        <div class="ycard has">
+          <div class="ycard-head">
+            <span class="yr-num">2026</span>
+            <span class="yr-tag tag-has">已记录</span>
+            <div class="yr-meta"><span>108字</span><span>🥰 晴</span><button class="edit-btn">展开</button></div>
+          </div>
+          <div class="ycard-body">
+            <div class="entry-txt">今天终于把个人规划的功能做完了，月计划和年计划的设计感觉挺顺的。下午喝了两杯咖啡，有点睡不着。晚上看了一集《文学的日常》，很治愈。</div>
+            <div class="entry-foot">
+              <span class="entry-time">2026-03-24 22:15</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2027 过去·有记录 -->
+        <div class="ycard has">
+          <div class="ycard-head">
+            <span class="yr-num">2027</span>
+            <span class="yr-tag tag-has">已记录</span>
+            <div class="yr-meta"><span>86字</span><span>😌 多云</span><button class="edit-btn">展开</button></div>
+          </div>
+          <div class="ycard-body">
+            <div class="entry-txt">在家待了一整天，写稿写到下午五点。订了外卖，看了两集综艺，早早睡了。平淡但踏实。</div>
+            <div class="entry-foot">
+              <span class="entry-time">2027-03-24 23:02</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ★★★ 2028 今年·含期许 ★★★ -->
+        <div class="ycard cur">
+          <div class="ycard-head">
+            <span class="yr-num">2028</span>
+            <span class="yr-tag tag-cur">今年</span>
+            <div class="yr-meta">
+              <span style="font-size:11px;color:#9ca3af">56字</span>
+              <span class="save-ok">✓ 已保存</span>
+            </div>
+          </div>
+          <div class="ycard-body">
+
+            <!-- 期许回顾块 -->
+            <div class="wish-block">
+              <div class="wish-header">
+                <span class="wish-from-badge">2026年的你曾许下</span>
+                <span class="wish-label">· 写于两年前的今天</span>
+              </div>
+              <div class="wish-text">希望到那时候已经出版了第一本书，在某个安静的小镇有自己的工作室。</div>
+            </div>
+
+            <div class="wish-divider"><span>✦ 现在，写下今天真实发生的一切 ✦</span></div>
+
+            <!-- 今年真实记录 -->
+            <div class="reality-label"><div class="dot"></div>2028年 · 今天</div>
+            <textarea class="diary-ta" rows="3" placeholder="书出版了吗？工作室有了吗？写下此刻真实的你…">书稿还差最后一章，出版的事在谈了。工作室没有，住在朋友家附近的出租屋，但窗外有棵很大的香樟树。</textarea>
+
+          </div>
+        </div>
+
+        <!-- 2029 未来 -->
+        <div class="ycard fut">
+          <div class="ycard-head"><span class="yr-num">2029</span><span class="yr-tag tag-fut">未来</span></div>
+          <div class="ycard-body"><div class="fut-prompt">2029年的今天还没到，<span class="fut-link">写下对这一天的期许？</span></div></div>
+        </div>
+
+        <!-- 2030 未来 -->
+        <div class="ycard fut">
+          <div class="ycard-head"><span class="yr-num">2030</span><span class="yr-tag tag-fut">未来</span></div>
+          <div class="ycard-body"><div class="fut-prompt">2030年的今天还没到，<span class="fut-link">写下对这一天的期许？</span></div></div>
+        </div>
+
+      </div>
+
+      <div class="recent-strip">
+        <div class="rs-title">最近写过的日子</div>
+        <div class="rs-list">
+          <span class="rs-chip today">3/24 今天</span>
+          <span class="rs-chip">3/23</span><span class="rs-chip">3/22</span>
+          <span class="rs-chip">3/21</span><span class="rs-chip">3/20</span>
+          <span class="rs-chip">3/18</span><span class="rs-chip">3/15</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showScene(y) {
+  document.getElementById('sc-2026').style.display = y === '2026' ? 'block' : 'none'
+  document.getElementById('sc-2028').style.display = y === '2028' ? 'block' : 'none'
+  document.querySelectorAll('.sc-btn').forEach((b, i) =>
+    b.classList.toggle('on', (i===0&&y==='2026')||(i===1&&y==='2028')))
+}
+</script>
+</body>
+</html>

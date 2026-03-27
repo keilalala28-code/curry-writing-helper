@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自媒体管理 效果图 v2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',sans-serif;background:#f8f7f4;display:flex;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{width:208px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:16px;border-bottom:1px solid #f3f4f6}
+.logo h1{font-size:17px;font-weight:700;color:#FF6B6B}
+.logo p{font-size:11px;color:#9ca3af;margin-top:2px}
+.nav{padding:8px;flex:1}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:500;color:#6b7280;cursor:pointer;margin-bottom:1px}
+.ni:hover{background:#f3f4f6}
+.ni.active{background:#fff0f0;color:#FF6B6B}
+
+/* ── Main ── */
+.main{flex:1;overflow:auto}
+.content{max-width:1100px;margin:0 auto;padding:24px}
+
+/* ── Page header ── */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.ph h1{font-size:22px;font-weight:700;color:#1f2937}
+.ph p{font-size:12px;color:#9ca3af;margin-top:3px}
+.btn{padding:8px 16px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;border:none}
+.btn-primary{background:#FF6B6B;color:#fff}
+.btn-outline{background:#fff;color:#6b7280;border:1px solid #e5e7eb}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:2px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:4px;margin-bottom:22px;width:fit-content}
+.tab{padding:7px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;color:#6b7280;border:none;background:none}
+.tab.active{background:#FF6B6B;color:#fff}
+.tab.script-tab{background:#f5f3ff;color:#7c3aed}
+.tab.script-tab.active{background:#7c3aed;color:#fff}
+
+/* ── Pages ── */
+.page{display:none}.page.show{display:block}
+
+/* ════════════════════════════
+   TAB 1 · 数据总览
+   ════════════════════════════ */
+.section-label{font-size:13px;font-weight:700;color:#374151;margin-bottom:12px}
+
+/* platform cards */
+.plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+.plat-card{background:#fff;border-radius:18px;border:1px solid #f0ede8;padding:20px 22px;display:flex;align-items:center;gap:16px}
+.plat-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.plat-name{font-size:12px;color:#9ca3af;margin-bottom:2px}
+.plat-count{font-size:32px;font-weight:800;color:#1f2937;line-height:1}
+.plat-change{font-size:12px;margin-top:4px}
+.up{color:#10b981}.down{color:#ef4444}
+.plat-edit{margin-left:auto;font-size:11px;color:#d1d5db;padding:4px 10px;border:1px solid #f3f4f6;border-radius:99px;cursor:pointer;background:none}
+.plat-edit:hover{border-color:#fca5a5;color:#FF6B6B}
+
+/* kanban */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.kcol{background:#fafaf8;border-radius:14px;padding:13px;border:1px solid #f0ede8}
+.kcol-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.kcol-title{font-size:12px;font-weight:700;color:#374151}
+.kbadge{font-size:10px;font-weight:700;padding:1px 8px;border-radius:99px}
+.kb-purple{background:#ede9fe;color:#6d28d9}
+.kb-orange{background:#ffedd5;color:#ea580c}
+.kb-blue{background:#dbeafe;color:#1d4ed8}
+.kb-green{background:#dcfce7;color:#15803d}
+.kcard{background:#fff;border-radius:10px;padding:11px 12px;margin-bottom:7px;border:1px solid #f0ede8;cursor:pointer}
+.kcard:hover{border-color:#fca5a5}
+.kcard-title{font-size:13px;font-weight:600;color:#1f2937;margin-bottom:6px;line-height:1.35}
+.ktag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:99px;font-weight:500}
+.t-idea{background:#ede9fe;color:#6d28d9}
+.t-make{background:#fed7aa;color:#c2410c}
+.t-delay{background:#fee2e2;color:#b91c1c}
+.t-ready{background:#bfdbfe;color:#1e40af}
+.t-done{background:#bbf7d0;color:#166534}
+.kcard-meta{font-size:11px;color:#9ca3af;margin-top:5px}
+
+/* bottom row */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bcard{background:#fff;border-radius:16px;border:1px solid #f0ede8;padding:20px}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:14px}
+.sv{font-size:26px;font-weight:800;color:#1f2937}
+.sl{font-size:11px;color:#9ca3af;margin-bottom:3px}
+.ss{font-size:11px;color:#9ca3af;margin-top:2px}
+.collab-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f9f6f2}
+.collab-row:last-of-type{border-bottom:none}
+.cn{font-size:13px;font-weight:600;color:#1f2937}
+.cp{font-size:11px;color:#9ca3af;margin-top:1px}
+.cbadge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px}
+.cb-paid{background:#dcfce7;color:#166534}
+.cb-nego{background:#fef9c3;color:#92400e}
+.add-btn{width:100%;margin-top:10px;padding:8px;border:2px dashed #e5e7eb;border-radius:10px;background:none;font-size:12px;color:#9ca3af;cursor:pointer}
+.add-btn:hover{border-color:#fca5a5;color:#FF6B6B}
+
+/* ════════════════════════════
+   TAB 2 · 内容看板（大看板）
+   ════════════════════════════ */
+.big-kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.big-col{background:#fafaf8;border-radius:16px;padding:16px;border:1px solid #f0ede8;min-height:500px}
+.big-col-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.big-col-title{font-size:14px;font-weight:700;color:#374151}
+.big-kcard{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #f0ede8;cursor:pointer}
+.big-kcard:hover{border-color:#fca5a5;box-shadow:0 2px 8px rgba(255,107,107,.08)}
+.bkt{font-size:14px;font-weight:600;color:#1f2937;margin-bottom:8px;line-height:1.35}
+.bk-meta-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.bk-plat{font-size:11px;color:#9ca3af}
+.add-card-btn{width:100%;padding:10px;border:2px dashed #e5e7eb;border-radius:10px;background:none;font-size:12px;color:#9ca3af;cursor:pointer;margin-top:4px}
+.add-card-btn:hover{border-color:#fca5a5;color:#FF6B6B}
+
+/* ════════════════════════════
+   TAB 3 · 品牌合作
+   ════════════════════════════ */
+.collab-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.collab-table{background:#fff;border-radius:16px;border:1px solid #f0ede8;overflow:hidden}
+.ct-head{display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:12px 20px;background:#fafaf8;border-bottom:1px solid #f3f4f6;font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.05em}
+.ct-row{display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:14px 20px;border-bottom:1px solid #f9f6f2;align-items:center}
+.ct-row:last-child{border-bottom:none}
+.ct-row:hover{background:#fafaf8}
+.ct-brand{font-size:13px;font-weight:600;color:#1f2937}
+.ct-proj{font-size:11px;color:#9ca3af;margin-top:2px}
+.ct-amt{font-size:14px;font-weight:700;color:#FF6B6B}
+.ct-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;display:inline-block}
+.cs-paid{background:#dcfce7;color:#166534}
+.cs-nego{background:#fef9c3;color:#92400e}
+.cs-new{background:#dbeafe;color:#1e40af}
+.ct-date{font-size:12px;color:#6b7280}
+.collab-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.cs-card{background:#fff;border-radius:14px;border:1px solid #f0ede8;padding:16px 20px}
+.cs-label{font-size:11px;color:#9ca3af;margin-bottom:4px}
+.cs-val{font-size:24px;font-weight:800;color:#1f2937}
+
+/* ════════════════════════════
+   TAB 4 · 脚本工坊
+   ════════════════════════════ */
+.script-layout{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+
+/* left input */
+.input-panel{background:#fff;border-radius:18px;border:1px solid #f0ede8;overflow:hidden}
+.ip-head{padding:16px 20px;border-bottom:1px solid #f9f6f2;background:linear-gradient(135deg,#f5f3ff,#fdf2f8)}
+.ip-head h3{font-size:15px;font-weight:700;color:#1f2937}
+.ip-head p{font-size:11px;color:#9ca3af;margin-top:2px}
+.ip-body{padding:18px}
+
+/* mode tabs */
+.mode-row{display:flex;gap:6px;margin-bottom:16px}
+.mode-btn{flex:1;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid #e5e7eb;background:#fff;color:#6b7280;text-align:center;transition:all .15s}
+.mode-btn.active{border-color:#FF6B6B;background:#fff0f0;color:#FF6B6B}
+.mode-btn.active.upload{border-color:#7c3aed;background:#f5f3ff;color:#7c3aed}
+
+.fg{margin-bottom:14px}
+.fl{font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.fbadge{font-size:10px;padding:1px 6px;border-radius:99px;font-weight:500;background:#ffedd5;color:#ea580c}
+.fbadge.ai{background:#ede9fe;color:#6d28d9}
+.fbadge.new{background:#dcfce7;color:#166534}
+input[type=text],textarea,select{width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:9px 13px;font-size:13px;color:#374151;background:#fff;outline:none;font-family:inherit;resize:none}
+input:focus,textarea:focus,select:focus{border-color:#FF6B6B}
+
+/* upload zone */
+.upload-zone{border:2px dashed #e5e7eb;border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .15s;background:#fafaf8}
+.upload-zone:hover{border-color:#c4b5fd;background:#f5f3ff}
+.upload-zone .icon{font-size:32px;margin-bottom:8px}
+.upload-zone .main-text{font-size:13px;font-weight:600;color:#374151;margin-bottom:3px}
+.upload-zone .sub-text{font-size:11px;color:#9ca3af}
+.upload-zone .limit{font-size:10px;color:#d1d5db;margin-top:6px}
+
+/* uploaded state */
+.uploaded-file{background:#f5f3ff;border:1px solid #e9d8fd;border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px}
+.uf-icon{font-size:20px}
+.uf-name{font-size:12px;font-weight:600;color:#6d28d9}
+.uf-size{font-size:11px;color:#9ca3af}
+.uf-remove{margin-left:auto;font-size:16px;color:#c4b5fd;cursor:pointer;background:none;border:none}
+.uf-remove:hover{color:#7c3aed}
+
+/* transcribing progress */
+.transcribe-progress{background:#fafaf8;border-radius:10px;padding:12px 14px;margin-top:10px}
+.tp-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+.tp-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.tp-done{background:#dcfce7;color:#166534}
+.tp-active{background:#ede9fe;color:#7c3aed}
+.tp-pending{background:#f3f4f6;color:#9ca3af}
+.tp-text{font-size:12px;color:#374151}
+.tp-text.active{color:#7c3aed;font-weight:600}
+.tp-text.done{color:#9ca3af;text-decoration:line-through}
+
+.plat-chips{display:flex;gap:6px;flex-wrap:wrap}
+.pchip{padding:5px 12px;border-radius:99px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#6b7280}
+.pchip.active{background:#fff0f0;border-color:#fca5a5;color:#FF6B6B}
+
+.gen-btn{width:100%;padding:13px;border-radius:12px;background:#FF6B6B;color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px}
+.gen-btn:hover{background:#e55555}
+.gen-btn.purple{background:#7c3aed}
+.gen-btn.purple:hover{background:#6d28d9}
+
+/* right output */
+.output-panel{background:#fff;border-radius:18px;border:1px solid #f0ede8;overflow:hidden}
+.op-head{padding:16px 20px;border-bottom:1px solid #f9f6f2;display:flex;align-items:center;justify-content:space-between}
+.op-head h3{font-size:15px;font-weight:700;color:#1f2937}
+.op-actions{display:flex;gap:6px}
+.act-btn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#6b7280}
+.act-btn:hover{background:#f9fafb}
+.act-btn.red{border-color:#fca5a5;color:#FF6B6B}
+.op-body{padding:20px;max-height:calc(100vh - 180px);overflow-y:auto}
+
+/* script output */
+.smeta{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.stag{font-size:11px;padding:3px 10px;border-radius:99px;font-weight:500}
+.ssec{margin-bottom:20px}
+.ssec-title{font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.ssec-title::after{content:'';flex:1;height:1px;background:#f3f4f6}
+.shighlight{background:#fff7ed;border-left:3px solid #FF6B6B;padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#374151;line-height:1.8;margin-bottom:8px}
+.stip{font-size:11px;color:#9ca3af;font-style:italic}
+.sblock{background:#f9fafb;border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.sblock-num{font-size:10px;font-weight:700;color:#9ca3af;margin-bottom:3px}
+.sblock-text{font-size:13px;color:#374151;line-height:1.7}
+.scta{background:#fff0f0;border-radius:10px;padding:12px 14px}
+.scta-text{font-size:13px;color:#c2410c;font-weight:600;line-height:1.7}
+.imitate-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:#ede9fe;color:#6d28d9;padding:3px 10px;border-radius:99px;font-weight:600}
+
+/* empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:420px;gap:10px}
+.empty-state .eicon{font-size:48px}
+.empty-state .etxt{font-size:14px;color:#9ca3af}
+.empty-state .esub{font-size:12px;color:#d1d5db;text-align:center;line-height:1.6}
+
+/* analysis box */
+.analysis-box{background:#f5f3ff;border:1px solid #e9d8fd;border-radius:12px;padding:14px;margin-bottom:14px}
+.ab-title{font-size:12px;font-weight:700;color:#6d28d9;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ab-row{display:flex;gap:8px;margin-bottom:7px}
+.ab-label{font-size:11px;color:#9ca3af;flex-shrink:0;width:54px;padding-top:1px}
+.ab-val{font-size:11px;color:#374151;flex:1;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">
+    <h1>🍛 咖喱小助手</h1>
+    <p>写作资源管理库</p>
+  </div>
+  <div class="nav">
+    <div class="ni">🎯 每日灵感</div>
+    <div class="ni">✍️ 码字计划</div>
+    <div class="ni">📂 分类浏览</div>
+    <div class="ni">📅 每日日程</div>
+    <div class="ni active">📱 自媒体管理</div>
+    <div class="ni">🎬 故事框架</div>
+    <div class="ni">📊 数据统计</div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+<div class="content">
+
+  <!-- Header -->
+  <div class="ph">
+    <div>
+      <h1>📱 自媒体管理</h1>
+      <p>内容创作 · 数据增长 · 品牌合作</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline" onclick="switchTab('script')">🤖 AI脚本工坊</button>
+      <button class="btn btn-primary">+ 新建内容</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tab-overview" onclick="switchTab('overview')">数据总览</button>
+    <button class="tab" id="tab-kanban" onclick="switchTab('kanban')">内容看板</button>
+    <button class="tab" id="tab-collab" onclick="switchTab('collab')">品牌合作</button>
+    <button class="tab script-tab" id="tab-script" onclick="switchTab('script')">🤖 脚本工坊</button>
+  </div>
+
+  <!-- ── PAGE: 数据总览 ── -->
+  <div class="page show" id="page-overview">
+
+    <div class="section-label">平台粉丝数据</div>
+    <div class="plat-grid">
+      <!-- 小红书 -->
+      <div class="plat-card">
+        <div class="plat-icon" style="background:#fff0f5">📕</div>
+        <div>
+          <div class="plat-name">小红书</div>
+          <div class="plat-count">3,281</div>
+          <div class="plat-change up">▲ +127 本月</div>
+        </div>
+        <button class="plat-edit" onclick="alert('手动更新粉丝数')">✏️ 更新</button>
+      </div>
+      <!-- 抖音 -->
+      <div class="plat-card">
+        <div class="plat-icon" style="background:#f0f7ff">🎵</div>
+        <div>
+          <div class="plat-name">抖音</div>
+          <div class="plat-count" style="color:#FF6B6B">12,480</div>
+          <div class="plat-change up">▲ +980 本月</div>
+        </div>
+        <button class="plat-edit" onclick="alert('手动更新粉丝数')">✏️ 更新</button>
+      </div>
+    </div>
+
+    <div class="section-label">内容制作看板</div>
+    <div class="kanban">
+      <div class="kcol">
+        <div class="kcol-head"><span class="kcol-title">💡 灵感库</span><span class="kbadge kb-purple">3</span></div>
+        <div class="kcard"><div class="kcard-title">写作3年月入5万的真实经历</div><span class="ktag t-idea">确定立项</span></div>
+        <div class="kcard"><div class="kcard-title">自媒体工作流大公开</div><span class="ktag t-idea">确定立项</span></div>
+        <div class="kcard"><div class="kcard-title">普通人如何建立写作副业</div><span class="ktag t-idea">确定立项</span></div>
+      </div>
+      <div class="kcol">
+        <div class="kcol-head"><span class="kcol-title">⚙️ 制作中</span><span class="kbadge kb-orange">2</span></div>
+        <div class="kcard"><div class="kcard-title">每天写3小时能改变什么</div><span class="ktag t-make">制作中</span><div class="kcard-meta">抖音 · 3月22日发</div></div>
+        <div class="kcard"><div class="kcard-title">我的一天完整工作流</div><span class="ktag t-delay">脚本待定</span></div>
+      </div>
+      <div class="kcol">
+        <div class="kcol-head"><span class="kcol-title">🔍 待发布</span><span class="kbadge kb-blue">2</span></div>
+        <div class="kcard"><div class="kcard-title">外语学习30分钟够吗</div><span class="ktag t-ready">定稿待发</span><div class="kcard-meta">小红书 · 3月21日</div></div>
+        <div class="kcard"><div class="kcard-title">自律不是意志力是设计</div><span class="ktag t-ready">定稿待发</span><div class="kcard-meta">抖音 · 3月23日</div></div>
+      </div>
+      <div class="kcol">
+        <div class="kcol-head"><span class="kcol-title">✅ 已发布</span><span class="kbadge kb-green">4</span></div>
+        <div class="kcard"><div class="kcard-title">写作者的日常routine</div><span class="ktag t-done">已发布</span><div class="kcard-meta">抖音 · 3月15日 · 2.1万赞</div></div>
+        <div class="kcard"><div class="kcard-title">月入5万的时间分配</div><span class="ktag t-done">已发布</span><div class="kcard-meta">小红书 · 3月10日</div></div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="bcard">
+        <div class="section-label" style="margin-bottom:0">📈 本月数据指标</div>
+        <div class="stat3">
+          <div><div class="sl">总粉丝增长</div><div class="sv" style="color:#10b981">+1,107</div><div class="ss">▲ 较上月 +62%</div></div>
+          <div><div class="sl">已发布内容</div><div class="sv">4</div><div class="ss">本月目标 8 篇</div></div>
+          <div><div class="sl">最高单视频</div><div class="sv" style="color:#FF6B6B">2.1万</div><div class="ss">赞藏量</div></div>
+        </div>
+      </div>
+      <div class="bcard">
+        <div class="section-label" style="margin-bottom:10px">🤝 品牌合作</div>
+        <div class="collab-row">
+          <div><div class="cn">某图书出版社</div><div class="cp">写作方法论短片 × 3</div></div>
+          <div style="text-align:right"><span class="cbadge cb-paid">已交付</span><div style="font-size:13px;font-weight:700;color:#FF6B6B;margin-top:2px">¥6,000</div></div>
+        </div>
+        <div class="collab-row">
+          <div><div class="cn">某效率工具品牌</div><div class="cp">日程管理视频植入</div></div>
+          <span class="cbadge cb-nego">洽谈中</span>
+        </div>
+        <button class="add-btn">+ 新增合作</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: 内容看板 ── -->
+  <div class="page" id="page-kanban">
+    <div class="big-kanban">
+      <div class="big-col">
+        <div class="big-col-head"><span class="big-col-title">💡 灵感库</span><span class="kbadge kb-purple">3</span></div>
+        <div class="big-kcard">
+          <div class="bkt">写作3年月入5万的真实经历</div>
+          <span class="ktag t-idea">确定立项</span>
+          <div class="bk-meta-row"><span class="bk-plat">暂未确定平台</span><span style="font-size:11px;color:#9ca3af">3/18 创建</span></div>
+        </div>
+        <div class="big-kcard">
+          <div class="bkt">自媒体工作流大公开</div>
+          <span class="ktag t-idea">确定立项</span>
+          <div class="bk-meta-row"><span class="bk-plat">抖音 + 小红书</span></div>
+        </div>
+        <div class="big-kcard">
+          <div class="bkt">普通人如何建立写作副业</div>
+          <span class="ktag t-idea">确定立项</span>
+          <div class="bk-meta-row"><span class="bk-plat">抖音</span></div>
+        </div>
+        <button class="add-card-btn">+ 添加灵感</button>
+      </div>
+      <div class="big-col">
+        <div class="big-col-head"><span class="big-col-title">⚙️ 制作中</span><span class="kbadge kb-orange">2</span></div>
+        <div class="big-kcard" style="border-color:#fed7aa">
+          <div class="bkt">每天写3小时能改变什么</div>
+          <span class="ktag t-make">制作中</span>
+          <div style="margin-top:8px;font-size:12px;color:#374151;background:#fff7ed;border-radius:8px;padding:8px;line-height:1.5">
+            <span style="font-weight:600;color:#ea580c">脚本进度：</span>已完成，剪辑中<br>
+            <span style="font-weight:600;color:#ea580c">计划发布：</span>3月22日 抖音
+          </div>
+        </div>
+        <div class="big-kcard">
+          <div class="bkt">我的一天完整工作流</div>
+          <span class="ktag t-delay">脚本待定</span>
+          <div class="bk-meta-row"><span class="bk-plat">小红书</span></div>
+        </div>
+        <button class="add-card-btn">+ 添加内容</button>
+      </div>
+      <div class="big-col">
+        <div class="big-col-head"><span class="big-col-title">🔍 待发布</span><span class="kbadge kb-blue">2</span></div>
+        <div class="big-kcard" style="border-color:#bfdbfe">
+          <div class="bkt">外语学习30分钟够吗</div>
+          <span class="ktag t-ready">定稿待发</span>
+          <div style="margin-top:8px;font-size:12px;color:#374151;background:#eff6ff;border-radius:8px;padding:8px;line-height:1.5">
+            <span style="font-weight:600;color:#1e40af">平台：</span>小红书<br>
+            <span style="font-weight:600;color:#1e40af">发布时间：</span>3月21日 18:00
+          </div>
+        </div>
+        <div class="big-kcard">
+          <div class="bkt">自律不是意志力是设计</div>
+          <span class="ktag t-ready">定稿待发</span>
+          <div class="bk-meta-row"><span class="bk-plat">抖音 · 3月23日</span></div>
+        </div>
+      </div>
+      <div class="big-col">
+        <div class="big-col-head"><span class="big-col-title">✅ 已发布</span><span class="kbadge kb-green">4</span></div>
+        <div class="big-kcard">
+          <div class="bkt">写作者的日常routine</div>
+          <span class="ktag t-done">已发布</span>
+          <div style="margin-top:8px;display:flex;gap:12px">
+            <div style="font-size:11px;color:#9ca3af">抖音 · 3/15</div>
+            <div style="font-size:12px;font-weight:700;color:#FF6B6B">❤️ 2.1万</div>
+            <div style="font-size:12px;color:#6b7280">⭐ 8,300</div>
+          </div>
+        </div>
+        <div class="big-kcard">
+          <div class="bkt">月入5万的时间分配</div>
+          <span class="ktag t-done">已发布</span>
+          <div style="margin-top:8px;display:flex;gap:12px">
+            <div style="font-size:11px;color:#9ca3af">小红书 · 3/10</div>
+            <div style="font-size:12px;font-weight:700;color:#FF6B6B">❤️ 6,200</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: 品牌合作 ── -->
+  <div class="page" id="page-collab">
+    <div class="collab-summary">
+      <div class="cs-card"><div class="cs-label">本月合作收入</div><div class="cs-val" style="color:#FF6B6B">¥6,000</div></div>
+      <div class="cs-card"><div class="cs-label">洽谈中项目</div><div class="cs-val">2</div></div>
+      <div class="cs-card"><div class="cs-label">年度累计</div><div class="cs-val">¥38,500</div></div>
+    </div>
+    <div class="collab-table">
+      <div class="ct-head">
+        <div>品牌 / 项目</div><div>合作内容</div><div>金额</div><div>状态</div><div>时间</div>
+      </div>
+      <div class="ct-row">
+        <div><div class="ct-brand">某图书出版社</div><div class="ct-proj">写作方法论</div></div>
+        <div style="font-size:12px;color:#6b7280">短片脚本 × 3条</div>
+        <div class="ct-amt">¥6,000</div>
+        <div><span class="ct-status cs-paid">已交付</span></div>
+        <div class="ct-date">3月10日</div>
+      </div>
+      <div class="ct-row">
+        <div><div class="ct-brand">某效率工具品牌</div><div class="ct-proj">日程管理植入</div></div>
+        <div style="font-size:12px;color:#6b7280">视频植入 × 1条</div>
+        <div class="ct-amt">¥12,000</div>
+        <div><span class="ct-status cs-nego">洽谈中</span></div>
+        <div class="ct-date">待定</div>
+      </div>
+      <div class="ct-row">
+        <div><div class="ct-brand">某咖啡品牌</div><div class="ct-proj">生活方式内容</div></div>
+        <div style="font-size:12px;color:#6b7280">小红书图文 × 2篇</div>
+        <div class="ct-amt">¥3,500</div>
+        <div><span class="ct-status cs-new">新接触</span></div>
+        <div class="ct-date">3月19日</div>
+      </div>
+    </div>
+    <button class="btn btn-outline" style="margin-top:14px;width:100%;border-style:dashed">+ 新增合作记录</button>
+  </div>
+
+  <!-- ── PAGE: 脚本工坊 ── -->
+  <div class="page" id="page-script">
+    <div class="script-layout">
+
+      <!-- Left -->
+      <div class="input-panel">
+        <div class="ip-head">
+          <h3>🤖 AI 脚本工坊</h3>
+          <p>原创扩写 · 上传视频仿写 · 文案仿写</p>
+        </div>
+        <div class="ip-body">
+
+          <!-- Mode -->
+          <div class="mode-row">
+            <div class="mode-btn active" id="m-original" onclick="setMode('original')">✍️ 原创扩写</div>
+            <div class="mode-btn upload" id="m-upload" onclick="setMode('upload')">🎬 上传视频仿写</div>
+            <div class="mode-btn" id="m-paste" onclick="setMode('paste')">📋 文案仿写</div>
+          </div>
+
+          <!-- ORIGINAL MODE -->
+          <div id="mode-original">
+            <div class="fg">
+              <div class="fl">视频主题 <span class="fbadge">必填</span></div>
+              <input type="text" value="写作3年，月入5万的真实经历" />
+            </div>
+            <div class="fg">
+              <div class="fl">故事线 / 核心卖点</div>
+              <textarea rows="4">从负债到月入5万，没有捷径只有真实——写作3年走过的弯路、低谷和突破，这不是成功学，是真实的笨方法。</textarea>
+            </div>
+            <div class="fg">
+              <div class="fl">目标平台</div>
+              <div class="plat-chips">
+                <span class="pchip active">抖音</span>
+                <span class="pchip">小红书</span>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">视频时长</div>
+              <select><option>3分钟（竖屏短视频）</option><option>5-8分钟（中视频）</option></select>
+            </div>
+            <button class="gen-btn" onclick="showResult('original')">✨ AI 生成脚本</button>
+          </div>
+
+          <!-- UPLOAD MODE -->
+          <div id="mode-upload" style="display:none">
+
+            <!-- 1. 你的视频主题（始终显示） -->
+            <div class="fg">
+              <div class="fl">你的视频主题 <span class="fbadge">必填</span></div>
+              <input type="text" value="写作3年，月入5万的真实经历" placeholder="如：外语学习30天的变化…" />
+            </div>
+
+            <!-- 2. 故事线（可选，始终显示） -->
+            <div class="fg">
+              <div class="fl">故事线 / 核心卖点 <span style="font-size:10px;color:#9ca3af;font-weight:400">可选</span></div>
+              <textarea rows="3" placeholder="简单描述你想表达的核心内容，留空则由AI根据主题自由发挥…">从负债到月入5万，用最笨的方法坚持写作3年，没有捷径，只有真实。</textarea>
+            </div>
+
+            <!-- 3. 上传对标视频 -->
+            <div class="fg">
+              <div class="fl">上传对标视频 <span class="fbadge ai">AI转录分析风格</span></div>
+              <!-- 未上传状态 -->
+              <div class="upload-zone" id="upload-empty" onclick="simulateUpload()">
+                <div class="icon">🎬</div>
+                <div class="main-text">点击上传对标视频</div>
+                <div class="sub-text">Whisper AI 自动转录，提取视频文案与风格</div>
+                <div class="limit">支持 mp4 · mov · m4a · 最大 25MB</div>
+              </div>
+              <!-- 已上传状态 -->
+              <div class="uploaded-file" id="upload-done" style="display:none">
+                <span class="uf-icon">🎬</span>
+                <div><div class="uf-name">彭小六-笨方法写作.mp4</div><div class="uf-size">18.3 MB · 4分27秒</div></div>
+                <button class="uf-remove" onclick="removeUpload()">×</button>
+              </div>
+              <!-- 转录进度 -->
+              <div class="transcribe-progress" id="transcribe-progress" style="display:none">
+                <div class="tp-row"><div class="tp-icon tp-done">✓</div><div class="tp-text done">视频上传完成</div></div>
+                <div class="tp-row"><div class="tp-icon tp-done">✓</div><div class="tp-text done">音频提取</div></div>
+                <div class="tp-row"><div class="tp-icon tp-active" style="animation:spin 1s linear infinite">⟳</div><div class="tp-text active">Whisper 语音转文字中…</div></div>
+                <div class="tp-row"><div class="tp-icon tp-pending">4</div><div class="tp-text">AI 风格分析</div></div>
+              </div>
+              <!-- 分析结果 -->
+              <div class="analysis-box" id="analysis-done" style="display:none">
+                <div class="ab-title">🤖 视频内容分析完成</div>
+                <div class="ab-row"><div class="ab-label">内容风格</div><div class="ab-val">干货型 · 真实感强 · 反鸡汤 · 故事导入</div></div>
+                <div class="ab-row"><div class="ab-label">开头惯用</div><div class="ab-val">「我XXX年只做了一件事」/「很多人问我…」</div></div>
+                <div class="ab-row"><div class="ab-label">结构模型</div><div class="ab-val">钩子 → 痛点 → 方法论 × 3 → 结果 → CTA</div></div>
+                <div class="ab-row"><div class="ab-label">爆款关键词</div><div class="ab-val">真实 / 笨方法 / 普通人 / 弯路 / 底层逻辑</div></div>
+                <div class="ab-row"><div class="ab-label">转录字数</div><div class="ab-val" style="color:#7c3aed;font-weight:600">约 1,240 字 · 消耗约 4,200 tokens</div></div>
+              </div>
+            </div>
+
+            <!-- 4. 目标平台 -->
+            <div class="fg">
+              <div class="fl">目标平台</div>
+              <div class="plat-chips">
+                <span class="pchip active">抖音</span>
+                <span class="pchip">小红书</span>
+              </div>
+            </div>
+
+            <button class="gen-btn purple" id="gen-upload-btn" style="display:none" onclick="showResult('upload')">✨ 仿写生成脚本</button>
+          </div>
+
+          <!-- PASTE MODE -->
+          <div id="mode-paste" style="display:none">
+            <div class="fg">
+              <div class="fl">对标视频文案 <span class="fbadge ai">AI分析风格</span></div>
+              <textarea rows="6" placeholder="粘贴对标视频的完整文案/字幕…（抖音视频文案一般在评论区第一条，小红书在正文）">很多人问我，你写作这么多年，后悔吗？
+
+我说后悔的事太多了，但唯独写作这件事我从没后悔过。
+
+第一年，一分钱没赚。存款花完了，朋友觉得我在浪费时间...</textarea>
+            </div>
+            <div class="fg">
+              <div class="fl">你的视频主题 <span class="fbadge">必填</span></div>
+              <input type="text" placeholder="如：外语学习30分钟能改变什么" value="写作3年，月入5万的真实经历" />
+            </div>
+            <div class="fg">
+              <div class="fl">目标平台</div>
+              <div class="plat-chips">
+                <span class="pchip active">抖音</span>
+                <span class="pchip">小红书</span>
+              </div>
+            </div>
+            <button class="gen-btn" onclick="showResult('paste')">✨ 仿写生成脚本</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right -->
+      <div class="output-panel">
+        <!-- 空状态 -->
+        <div id="out-empty">
+          <div class="op-head"><h3>脚本预览</h3></div>
+          <div class="empty-state">
+            <div class="eicon">✨</div>
+            <div class="etxt">选择模式，填写信息，点击生成</div>
+            <div class="esub">✍️ 原创扩写 · 输入主题和故事线<br>🎬 上传视频 · AI转录后自动分析仿写<br>📋 文案仿写 · 粘贴文案快速生成</div>
+          </div>
+        </div>
+        <!-- 结果 -->
+        <div id="out-result" style="display:none">
+          <div class="op-head">
+            <div>
+              <h3>生成脚本</h3>
+            </div>
+            <div class="op-actions">
+              <button class="act-btn">♻️ 重新生成</button>
+              <button class="act-btn">📋 复制</button>
+              <button class="act-btn red">💾 存入看板</button>
+            </div>
+          </div>
+          <div class="op-body">
+            <div class="smeta" id="smeta-tags">
+              <span class="stag" style="background:#fff0f5;color:#be185d">抖音</span>
+              <span class="stag" style="background:#f0fdf4;color:#15803d">3分钟短视频</span>
+              <span class="stag" style="background:#fef9c3;color:#92400e">约 850 字</span>
+            </div>
+
+            <div class="ssec">
+              <div class="ssec-title">🎣 开头钩子（0–15秒）</div>
+              <div class="shighlight">「很多人问我，写作3年，你后悔吗？」<br>「我说——后悔的事多了，但只有一件事我从没后悔过。」</div>
+              <div class="stip">💡 反问式开头，制造悬念，前3秒留住用户</div>
+            </div>
+
+            <div class="ssec">
+              <div class="ssec-title">😰 痛点共鸣（15–45秒）</div>
+              <div class="sblock"><div class="sblock-num">SCENE 01</div><div class="sblock-text">「我第一年写作，一分钱没赚。存款花完了，周围的人说我在浪费时间。我也觉得自己是不是太傻了——一个普通人，凭什么靠写字赚钱？」</div></div>
+              <div class="sblock"><div class="sblock-num">SCENE 02</div><div class="sblock-text">「但我没有别的本事。我就继续写。不是因为有多自律，是因为不写我不知道还能干啥。」</div></div>
+            </div>
+
+            <div class="ssec">
+              <div class="ssec-title">💡 方法论（45秒–2分30秒）</div>
+              <div class="sblock"><div class="sblock-num">方法 01 · 笨方法积累</div><div class="sblock-text">「我的笨方法是：每天早上7点到10点半，雷打不动写3.5小时。不看数据，不焦虑排名，只管输出。3年后，我有了100万字的存货。」</div></div>
+              <div class="sblock"><div class="sblock-num">方法 02 · 真实感&gt;技巧</div><div class="sblock-text">「我没学过写作课，没有秘籍。我只是把自己真实走过的弯路写出来。越真实，越有人看。」</div></div>
+              <div class="sblock"><div class="sblock-num">方法 03 · 长期主义</div><div class="sblock-text">「第三年，一篇文章带来了第一个5万的合作。不是因为我突然开窍，是前两年的积累到了那个点。」</div></div>
+            </div>
+
+            <div class="ssec">
+              <div class="ssec-title">📣 结尾 CTA</div>
+              <div class="scta"><div class="scta-text">「如果你也在坚持做一件普通人觉得没用的事——先别停。收藏这条视频，等3年后你再来告诉我。」</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</div>
+
+<style>
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+
+<script>
+// Tab switching
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('show'))
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+  document.getElementById('page-' + tab).classList.add('show')
+  document.getElementById('tab-' + tab).classList.add('active')
+}
+
+// Script mode switching
+function setMode(mode) {
+  ['original','upload','paste'].forEach(m => {
+    document.getElementById('m-' + m).classList.remove('active','upload')
+    document.getElementById('mode-' + m).style.display = 'none'
+  })
+  document.getElementById('m-' + mode).classList.add('active')
+  if (mode === 'upload') document.getElementById('m-upload').classList.add('upload')
+  document.getElementById('mode-' + mode).style.display = 'block'
+  // reset output
+  document.getElementById('out-empty').style.display = 'block'
+  document.getElementById('out-result').style.display = 'none'
+}
+
+// Simulate upload flow
+function simulateUpload() {
+  document.getElementById('upload-empty').style.display = 'none'
+  document.getElementById('transcribe-progress').style.display = 'block'
+  setTimeout(() => {
+    document.getElementById('transcribe-progress').style.display = 'none'
+    document.getElementById('upload-done').style.display = 'flex'
+    document.getElementById('analysis-done').style.display = 'block'
+    document.getElementById('gen-upload-btn').style.display = 'flex'
+  }, 2200)
+}
+
+function removeUpload() {
+  document.getElementById('upload-done').style.display = 'none'
+  document.getElementById('analysis-done').style.display = 'none'
+  document.getElementById('gen-upload-btn').style.display = 'none'
+  document.getElementById('upload-empty').style.display = 'block'
+}
+
+// Show result
+function showResult(mode) {
+  const metaTags = document.getElementById('smeta-tags')
+  if (mode === 'upload') {
+    metaTags.innerHTML = `
+      <span class="stag" style="background:#fff0f5;color:#be185d">抖音</span>
+      <span class="stag" style="background:#f0fdf4;color:#15803d">3分钟短视频</span>
+      <span class="imitate-badge">🎬 仿 彭小六 风格</span>
+      <span class="stag" style="background:#fef9c3;color:#92400e">约 850 字</span>
+      <span class="stag" style="background:#ede9fe;color:#6d28d9">~4,200 tokens</span>`
+  } else if (mode === 'paste') {
+    metaTags.innerHTML = `
+      <span class="stag" style="background:#fff0f5;color:#be185d">抖音</span>
+      <span class="stag" style="background:#f0fdf4;color:#15803d">3分钟短视频</span>
+      <span class="imitate-badge">📋 文案风格仿写</span>
+      <span class="stag" style="background:#fef9c3;color:#92400e">约 850 字</span>`
+  } else {
+    metaTags.innerHTML = `
+      <span class="stag" style="background:#fff0f5;color:#be185d">抖音</span>
+      <span class="stag" style="background:#f0fdf4;color:#15803d">3分钟短视频</span>
+      <span class="stag" style="background:#fef9c3;color:#92400e">约 850 字 · ~2,000 tokens</span>`
+  }
+  document.getElementById('out-empty').style.display = 'none'
+  document.getElementById('out-result').style.display = 'block'
+}
+</script>
+</body>
+</html>

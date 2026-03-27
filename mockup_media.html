@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自媒体管理 - 效果图</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif; background: #f8f7f4; display: flex; height: 100vh; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { width: 208px; background: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; flex-shrink: 0; }
+.logo { padding: 16px; border-bottom: 1px solid #f3f4f6; }
+.logo h1 { font-size: 17px; font-weight: 700; color: #FF6B6B; }
+.logo p { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.nav-item { display: block; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #6b7280; margin: 1px 8px; cursor: pointer; }
+.nav-item.active { background: #fff0f0; color: #FF6B6B; }
+.nav-item:hover:not(.active) { background: #f3f4f6; }
+
+/* Main */
+.main { flex: 1; overflow: auto; }
+.content { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+/* Page header */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.page-title h1 { font-size: 22px; font-weight: 700; color: #1f2937; }
+.page-title p { font-size: 12px; color: #9ca3af; margin-top: 3px; }
+.header-btns { display: flex; gap: 8px; }
+.btn { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; }
+.btn-primary { background: #FF6B6B; color: white; }
+.btn-outline { background: white; color: #6b7280; border: 1px solid #e5e7eb; }
+
+/* Tabs */
+.tabs { display: flex; gap: 2px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 4px; margin-bottom: 24px; width: fit-content; }
+.tab { padding: 7px 18px; border-radius: 9px; font-size: 13px; font-weight: 500; cursor: pointer; color: #6b7280; border: none; background: none; }
+.tab.active { background: #FF6B6B; color: white; }
+
+/* ─── TAB 1: 数据总览 ─── */
+
+/* Platform cards */
+.platform-section { margin-bottom: 24px; }
+.section-title { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 12px; }
+.platform-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.platform-card { background: white; border-radius: 16px; border: 1px solid #f0ede8; padding: 18px; display: flex; align-items: center; gap: 14px; }
+.platform-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.platform-info { flex: 1; }
+.platform-name { font-size: 12px; color: #9ca3af; }
+.platform-count { font-size: 26px; font-weight: 800; color: #1f2937; line-height: 1.1; }
+.platform-change { font-size: 11px; margin-top: 2px; }
+.up { color: #10b981; }
+.down { color: #ef4444; }
+
+/* Kanban */
+.kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.kanban-col { background: #fafaf8; border-radius: 14px; padding: 14px; border: 1px solid #f0ede8; }
+.col-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.col-title { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap-6px; }
+.col-count { font-size: 11px; font-weight: 700; background: #e5e7eb; color: #6b7280; padding: 1px 8px; border-radius: 99px; }
+.col-count.orange { background: #ffedd5; color: #ea580c; }
+.col-count.blue { background: #dbeafe; color: #1d4ed8; }
+.col-count.green { background: #dcfce7; color: #15803d; }
+.col-count.purple { background: #ede9fe; color: #6d28d9; }
+.kanban-card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 8px; border: 1px solid #f0ede8; cursor: pointer; }
+.kanban-card:hover { border-color: #fca5a5; }
+.kanban-card-title { font-size: 13px; font-weight: 600; color: #1f2937; margin-bottom: 6px; line-height: 1.3; }
+.kanban-tag { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+.tag-idea { background: #ede9fe; color: #6d28d9; }
+.tag-making { background: #fed7aa; color: #c2410c; }
+.tag-ready { background: #bfdbfe; color: #1e40af; }
+.tag-done { background: #bbf7d0; color: #166534; }
+.tag-delay { background: #fee2e2; color: #b91c1c; }
+.kanban-meta { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+
+/* Bottom grid */
+.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.stats-card { background: white; border-radius: 16px; border: 1px solid #f0ede8; padding: 20px; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 12px; }
+.stat-item .label { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+.stat-item .value { font-size: 26px; font-weight: 800; color: #1f2937; }
+.stat-item .sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.collab-card { background: white; border-radius: 16px; border: 1px solid #f0ede8; padding: 20px; }
+.collab-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f9f6f2; }
+.collab-row:last-child { border-bottom: none; }
+.collab-name { font-size: 13px; font-weight: 600; color: #1f2937; }
+.collab-project { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.collab-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; }
+.badge-paid { background: #dcfce7; color: #166534; }
+.badge-nego { background: #fef9c3; color: #92400e; }
+.badge-new { background: #dbeafe; color: #1e40af; }
+.add-collab { width: 100%; margin-top: 10px; padding: 8px; border: 2px dashed #e5e7eb; border-radius: 10px; background: none; font-size: 12px; color: #9ca3af; cursor: pointer; }
+.add-collab:hover { border-color: #fca5a5; color: #FF6B6B; }
+
+/* ─── SCRIPT PAGE ─── */
+.script-page { display: none; }
+.script-page.show { display: block; }
+.overview-page { display: block; }
+.overview-page.hide { display: none; }
+
+.script-layout { display: grid; grid-template-columns: 380px 1fr; gap: 18px; align-items: start; }
+
+/* Left input panel */
+.input-panel { background: white; border-radius: 16px; border: 1px solid #f0ede8; overflow: hidden; }
+.panel-header { padding: 16px 20px; border-bottom: 1px solid #f9f6f2; background: #fafaf8; }
+.panel-header h3 { font-size: 15px; font-weight: 700; color: #1f2937; }
+.panel-header p { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.panel-body { padding: 18px; }
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+.form-label .badge { font-size: 10px; padding: 1px 6px; border-radius: 99px; font-weight: 500; background: #ffedd5; color: #ea580c; }
+.form-label .badge.ai { background: #ede9fe; color: #6d28d9; }
+textarea, input[type=text], select { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #374151; background: white; outline: none; font-family: inherit; resize: none; }
+textarea:focus, input[type=text]:focus, select:focus { border-color: #FF6B6B; }
+.mode-toggle { display: flex; gap: 6px; margin-bottom: 14px; }
+.mode-btn { flex: 1; padding: 8px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; border: 2px solid #e5e7eb; background: white; color: #6b7280; text-align: center; }
+.mode-btn.active { border-color: #FF6B6B; background: #fff0f0; color: #FF6B6B; }
+.divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+.divider span { font-size: 11px; color: #d1d5db; white-space: nowrap; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #f3f4f6; }
+.platform-selector { display: flex; gap: 6px; flex-wrap: wrap; }
+.platform-chip { padding: 5px 12px; border-radius: 99px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid #e5e7eb; background: white; color: #6b7280; }
+.platform-chip.active { background: #fff0f0; border-color: #fca5a5; color: #FF6B6B; }
+.generate-btn { width: 100%; padding: 12px; border-radius: 12px; background: #FF6B6B; color: white; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap-8px; }
+.generate-btn:hover { background: #e55555; }
+.generate-btn .icon { font-size: 16px; }
+
+/* AI analyze box */
+.ai-analyze-box { background: #f9f5ff; border: 1px solid #e9d8fd; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+.ai-analyze-title { font-size: 12px; font-weight: 700; color: #6d28d9; margin-bottom: 8px; display: flex; align-items: center; gap-5px; }
+.ai-analyze-row { display: flex; gap-8px; margin-bottom: 8px; align-items: flex-start; }
+.ai-analyze-label { font-size: 11px; color: #9ca3af; flex-shrink: 0; width: 50px; }
+.ai-analyze-value { font-size: 11px; color: #374151; flex: 1; line-height: 1.5; }
+
+/* Right output panel */
+.output-panel { background: white; border-radius: 16px; border: 1px solid #f0ede8; overflow: hidden; }
+.output-header { padding: 16px 20px; border-bottom: 1px solid #f9f6f2; display: flex; align-items: center; justify-content: space-between; }
+.output-header h3 { font-size: 15px; font-weight: 700; color: #1f2937; }
+.output-actions { display: flex; gap: 6px; }
+.action-btn { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid #e5e7eb; background: white; color: #6b7280; }
+.action-btn:hover { background: #f9fafb; }
+.action-btn.red { border-color: #fca5a5; color: #FF6B6B; }
+.output-body { padding: 20px; }
+.script-meta { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.script-meta-tag { font-size: 11px; padding: 3px 10px; border-radius: 99px; font-weight: 500; }
+.script-section { margin-bottom: 20px; }
+.script-section-title { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.script-section-title::after { content: ''; flex: 1; height: 1px; background: #f3f4f6; }
+.script-text { font-size: 14px; color: #374151; line-height: 1.8; }
+.script-highlight { background: #fff7ed; border-left: 3px solid #FF6B6B; padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 13px; color: #374151; line-height: 1.7; margin-bottom: 10px; }
+.script-tag-line { font-size: 12px; color: #9ca3af; font-style: italic; margin-top: 4px; }
+.scene-block { background: #f9fafb; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.scene-num { font-size: 10px; font-weight: 700; color: #9ca3af; margin-bottom: 4px; }
+.scene-text { font-size: 13px; color: #374151; line-height: 1.6; }
+.cta-block { background: #fff0f0; border-radius: 10px; padding: 12px 14px; }
+.cta-text { font-size: 13px; color: #c2410c; font-weight: 600; }
+.imitate-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; background: #ede9fe; color: #6d28d9; padding: 3px 10px; border-radius: 99px; font-weight: 600; }
+
+/* Progress bar animation */
+.gen-progress { background: #f9fafb; border-radius: 12px; padding: 24px; text-align: center; }
+.gen-step { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.gen-step-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.step-done { background: #dcfce7; color: #166534; }
+.step-active { background: #fff0f0; color: #FF6B6B; }
+.step-pending { background: #f3f4f6; color: #9ca3af; }
+.gen-step-text { font-size: 13px; color: #374151; }
+.gen-step-text.active { color: #FF6B6B; font-weight: 600; }
+.gen-step-text.done { color: #9ca3af; text-decoration: line-through; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">
+    <h1>🍛 咖喱小助手</h1>
+    <p>写作资源管理库</p>
+  </div>
+  <nav style="padding:8px;flex:1">
+    <div class="nav-item">🎯 每日灵感</div>
+    <div class="nav-item">✍️ 码字计划</div>
+    <div class="nav-item">📂 分类浏览</div>
+    <div class="nav-item">📅 每日日程</div>
+    <div class="nav-item active">📱 自媒体管理</div>
+    <div class="nav-item">🎬 故事框架</div>
+    <div class="nav-item">📊 数据统计</div>
+  </nav>
+</div>
+
+<!-- Main -->
+<div class="main">
+<div class="content">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-title">
+      <h1>📱 自媒体管理</h1>
+      <p>内容创作 · 数据增长 · 品牌合作</p>
+    </div>
+    <div class="header-btns">
+      <button class="btn btn-outline" onclick="showScript()">🤖 AI 生成脚本</button>
+      <button class="btn btn-primary">+ 新建内容</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tab-overview" onclick="showTab('overview')">数据总览</button>
+    <button class="tab" id="tab-kanban" onclick="showTab('kanban')">内容看板</button>
+    <button class="tab" id="tab-calendar" onclick="showTab('calendar')">发布日历</button>
+    <button class="tab" id="tab-collab" onclick="showTab('collab')">品牌合作</button>
+    <button class="tab" id="tab-script" onclick="showScript()" style="background:#f9f5ff;color:#6d28d9">🤖 脚本工坊</button>
+  </div>
+
+  <!-- OVERVIEW PAGE -->
+  <div class="overview-page" id="overview-page">
+
+    <!-- Platform followers -->
+    <div class="platform-section">
+      <div class="section-title">平台粉丝数据</div>
+      <div class="platform-grid">
+        <div class="platform-card">
+          <div class="platform-icon" style="background:#fff0f5">📕</div>
+          <div class="platform-info">
+            <div class="platform-name">小红书</div>
+            <div class="platform-count">199</div>
+            <div class="platform-change up">▲ +12 本月</div>
+          </div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-icon" style="background:#f0f7ff">🎵</div>
+          <div class="platform-info">
+            <div class="platform-name">抖音</div>
+            <div class="platform-count" style="color:#FF6B6B">1,024</div>
+            <div class="platform-change up">▲ +86 本月</div>
+          </div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-icon" style="background:#f0fff4">💬</div>
+          <div class="platform-info">
+            <div class="platform-name">公众号</div>
+            <div class="platform-count">438</div>
+            <div class="platform-change down">▼ -3 本月</div>
+          </div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-icon" style="background:#fff5f0">📺</div>
+          <div class="platform-info">
+            <div class="platform-name">Bilibili</div>
+            <div class="platform-count">320</div>
+            <div class="platform-change up">▲ +28 本月</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kanban -->
+    <div class="section-title">内容制作看板</div>
+    <div class="kanban">
+      <div class="kanban-col">
+        <div class="col-header">
+          <div class="col-title">💡 灵感库</div>
+          <span class="col-count purple">3</span>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">Macbook 实用技巧合集</div>
+          <span class="kanban-tag tag-idea">确定立项</span>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">自媒体工作流大公开</div>
+          <span class="kanban-tag tag-idea">确定立项</span>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">自律的第一步是什么</div>
+          <span class="kanban-tag tag-idea">确定立项</span>
+        </div>
+      </div>
+      <div class="kanban-col">
+        <div class="col-header">
+          <div class="col-title">⚙️ 制作中</div>
+          <span class="col-count orange">4</span>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">当一个自媒体博主用上了 Notion</div>
+          <span class="kanban-tag tag-delay">已延期 7 天</span>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">我都用 Notion 管理什么</div>
+          <span class="kanban-tag tag-making">制作中</span>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">写一条笔记灵感的完整流程</div>
+          <span class="kanban-tag tag-making">制作中</span>
+        </div>
+      </div>
+      <div class="kanban-col">
+        <div class="col-header">
+          <div class="col-title">🔍 待发布</div>
+          <span class="col-count blue">2</span>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">用 Notion 过好每一天</div>
+          <span class="kanban-tag tag-ready">定稿待发</span>
+          <div class="kanban-meta">小红书</div>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">42万人看过的 Notion 系统后续</div>
+          <span class="kanban-tag tag-ready">定稿待发</span>
+          <div class="kanban-meta">抖音</div>
+        </div>
+      </div>
+      <div class="kanban-col">
+        <div class="col-header">
+          <div class="col-title">✅ 已发布</div>
+          <span class="col-count green">3</span>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">自媒体工作流大公开</div>
+          <span class="kanban-tag tag-done">已发布</span>
+          <div class="kanban-meta">3月5日</div>
+        </div>
+        <div class="kanban-card">
+          <div class="kanban-card-title">产品官宣脚本模板</div>
+          <span class="kanban-tag tag-done">已发布</span>
+          <div class="kanban-meta">3月12日</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="bottom-grid">
+      <div class="stats-card">
+        <div class="section-title" style="margin-bottom:0">📈 本月数据指标</div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="label">总粉丝增长</div>
+            <div class="value" style="color:#10b981">+123</div>
+            <div class="sub">▲ 较上月 +38%</div>
+          </div>
+          <div class="stat-item">
+            <div class="label">已发布内容</div>
+            <div class="value">3</div>
+            <div class="sub">本月目标 6 篇</div>
+          </div>
+          <div class="stat-item">
+            <div class="label">最高互动量</div>
+            <div class="value" style="color:#FF6B6B">6,993</div>
+            <div class="sub">赞藏/篇</div>
+          </div>
+        </div>
+      </div>
+      <div class="collab-card">
+        <div class="section-title" style="margin-bottom:8px">🤝 品牌合作</div>
+        <div class="collab-row">
+          <div>
+            <div class="collab-name">蒲公英</div>
+            <div class="collab-project">自媒体工作流大公开</div>
+          </div>
+          <div>
+            <span class="collab-badge badge-paid">已交付</span>
+            <div style="font-size:13px;font-weight:700;color:#FF6B6B;margin-top:2px;text-align:right">¥9,999</div>
+          </div>
+        </div>
+        <div class="collab-row">
+          <div>
+            <div class="collab-name">某数码品牌</div>
+            <div class="collab-project">Macbook 技巧合集</div>
+          </div>
+          <span class="collab-badge badge-nego">洽谈中</span>
+        </div>
+        <button class="add-collab">+ 新增合作</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT PAGE -->
+  <div class="script-page" id="script-page">
+    <div class="script-layout">
+
+      <!-- Left: Input Panel -->
+      <div class="input-panel">
+        <div class="panel-header">
+          <h3>🤖 AI 脚本工坊</h3>
+          <p>主题扩写 · 对标仿写 · 一键生成</p>
+        </div>
+        <div class="panel-body">
+
+          <!-- Mode toggle -->
+          <div class="mode-toggle">
+            <div class="mode-btn active" id="mode-original" onclick="setMode('original')">
+              ✍️ 原创扩写
+            </div>
+            <div class="mode-btn" id="mode-imitate" onclick="setMode('imitate')">
+              🎯 对标仿写
+            </div>
+          </div>
+
+          <!-- 原创 fields -->
+          <div id="original-fields">
+            <div class="form-group">
+              <div class="form-label">视频主题 <span class="badge">必填</span></div>
+              <input type="text" value="写作3年，月入5万的真实经历" placeholder="如：自律100天的变化…" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">故事线 / 核心卖点</div>
+              <textarea rows="4" placeholder="描述视频的故事线或核心内容…">从负债到月入5万，没有捷径只有真实——写作3年走过的弯路、低谷和突破，这不是成功学，是真实的笨方法。</textarea>
+            </div>
+            <div class="form-group">
+              <div class="form-label">目标平台</div>
+              <div class="platform-selector">
+                <span class="platform-chip active">抖音</span>
+                <span class="platform-chip">小红书</span>
+                <span class="platform-chip">B站</span>
+                <span class="platform-chip">视频号</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">视频时长</div>
+              <select>
+                <option>3分钟（竖屏短视频）</option>
+                <option>5-8分钟（中视频）</option>
+                <option>10分钟+（深度视频）</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 仿写 fields（hidden by default）-->
+          <div id="imitate-fields" style="display:none">
+            <div class="form-group">
+              <div class="form-label">视频主题 <span class="badge">必填</span></div>
+              <input type="text" value="写作3年，月入5万的真实经历" placeholder="如：自律100天的变化…" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">对标账号 <span class="badge ai">AI分析</span></div>
+              <input type="text" placeholder="输入账号名或主页链接，如：@彭小六" value="@彭小六" />
+            </div>
+
+            <!-- AI分析结果 -->
+            <div class="ai-analyze-box">
+              <div class="ai-analyze-title">🤖 AI 账号风格分析</div>
+              <div class="ai-analyze-row">
+                <div class="ai-analyze-label">内容风格</div>
+                <div class="ai-analyze-value">干货型 · 故事导入 · 真实感强 · 反鸡汤</div>
+              </div>
+              <div class="ai-analyze-row">
+                <div class="ai-analyze-label">开头惯用</div>
+                <div class="ai-analyze-value">「我XXX年只做了一件事」/ 「很多人问我为什么…」</div>
+              </div>
+              <div class="ai-analyze-row">
+                <div class="ai-analyze-label">结构模型</div>
+                <div class="ai-analyze-value">钩子→痛点共鸣→方法论→结果展示→CTA</div>
+              </div>
+              <div class="ai-analyze-row">
+                <div class="ai-analyze-label">爆款关键词</div>
+                <div class="ai-analyze-value">真实 / 笨方法 / 普通人 / 弯路 / 底层逻辑</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="form-label">参考视频标题（可选）</div>
+              <input type="text" placeholder="粘贴对标视频标题帮助AI理解风格" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">目标平台</div>
+              <div class="platform-selector">
+                <span class="platform-chip active">抖音</span>
+                <span class="platform-chip">小红书</span>
+                <span class="platform-chip">B站</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="generate-btn" onclick="showResult()">
+            <span class="icon">✨</span>&nbsp; AI 生成脚本
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Output Panel -->
+      <div class="output-panel">
+
+        <!-- Generating state -->
+        <div id="gen-state" style="display:none">
+          <div class="output-header">
+            <h3>生成中…</h3>
+          </div>
+          <div class="output-body">
+            <div class="gen-progress">
+              <div class="gen-step"><div class="gen-step-icon step-done">✓</div><div class="gen-step-text done">分析视频主题与故事线</div></div>
+              <div class="gen-step"><div class="gen-step-icon step-done">✓</div><div class="gen-step-text done">对标账号风格提取</div></div>
+              <div class="gen-step"><div class="gen-step-icon step-active">⟳</div><div class="gen-step-text active">正在生成脚本结构…</div></div>
+              <div class="gen-step"><div class="gen-step-icon step-pending">4</div><div class="gen-step-text">优化开头钩子与CTA</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result state -->
+        <div id="result-state">
+          <div class="output-header">
+            <div>
+              <h3>生成脚本</h3>
+            </div>
+            <div class="output-actions">
+              <button class="action-btn">♻️ 重新生成</button>
+              <button class="action-btn">📋 复制全文</button>
+              <button class="action-btn red">💾 保存到看板</button>
+            </div>
+          </div>
+          <div class="output-body" style="max-height:calc(100vh - 200px);overflow-y:auto">
+            <div class="script-meta">
+              <span class="script-meta-tag" style="background:#fff0f5;color:#be185d">抖音</span>
+              <span class="script-meta-tag" style="background:#f0fdf4;color:#15803d">3分钟短视频</span>
+              <span class="imitate-badge">🎯 仿 @彭小六 风格</span>
+              <span class="script-meta-tag" style="background:#fef9c3;color:#92400e">约 800 字</span>
+            </div>
+
+            <div class="script-section">
+              <div class="script-section-title">🎣 开头钩子（0–15秒）</div>
+              <div class="script-highlight">
+                「很多人问我，写作3年，你后悔吗？」<br>
+                「我说——后悔的事多了，但只有一件事我从没后悔过。」
+              </div>
+              <div class="script-tag-line">💡 反问式开头，制造悬念，前3秒留住用户</div>
+            </div>
+
+            <div class="script-section">
+              <div class="script-section-title">😰 痛点共鸣（15–45秒）</div>
+              <div class="scene-block">
+                <div class="scene-num">SCENE 01</div>
+                <div class="scene-text">「我第一年写作，一分钱没赚。存款花完了，周围的人说我在浪费时间。我也觉得自己是不是太傻了——一个普通人，凭什么靠写字赚钱？」</div>
+              </div>
+              <div class="scene-block">
+                <div class="scene-num">SCENE 02</div>
+                <div class="scene-text">「但我没有别的本事。我就继续写。不是因为有多自律，是因为不写我不知道还能干啥。」</div>
+              </div>
+            </div>
+
+            <div class="script-section">
+              <div class="script-section-title">💡 方法论（45秒–2分30秒）</div>
+              <div class="scene-block">
+                <div class="scene-num">方法 01 · 笨方法积累</div>
+                <div class="scene-text">「我的笨方法是：每天早上7点到10点半，雷打不动写3.5小时。不看数据，不焦虑排名，只管输出。3年后，我有了100万字的存货。」</div>
+              </div>
+              <div class="scene-block">
+                <div class="scene-num">方法 02 · 真实感>技巧</div>
+                <div class="scene-text">「我没学过写作课，没有秘籍。我只是把自己真实经历的弯路写出来。越真实，越有人看。」</div>
+              </div>
+              <div class="scene-block">
+                <div class="scene-num">方法 03 · 长期主义</div>
+                <div class="scene-text">「第三年，一篇文章带来了第一个5万的合作。不是因为我突然开窍，是前两年的积累到了那个点。」</div>
+              </div>
+            </div>
+
+            <div class="script-section">
+              <div class="script-section-title">📣 结尾 CTA</div>
+              <div class="cta-block">
+                <div class="cta-text">「如果你也在坚持做一件普通人觉得没用的事——先别停。收藏这条视频，等3年后你再来告诉我。」</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" style="display:none">
+          <div class="output-header"><h3>脚本预览</h3></div>
+          <div class="output-body" style="display:flex;align-items:center;justify-content:center;height:400px;flex-direction:column;gap:12px">
+            <div style="font-size:48px">✨</div>
+            <div style="font-size:14px;color:#9ca3af">填写左侧信息，点击生成按钮</div>
+            <div style="font-size:12px;color:#d1d5db">支持原创扩写 · 对标仿写两种模式</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function showTab(tab) {
+  document.getElementById('overview-page').style.display = 'block';
+  document.getElementById('script-page').style.display = 'none';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const el = document.getElementById('tab-' + tab);
+  if (el) el.classList.add('active');
+}
+
+function showScript() {
+  document.getElementById('overview-page').style.display = 'none';
+  document.getElementById('script-page').style.display = 'block';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-script').classList.add('active');
+}
+
+function setMode(mode) {
+  document.getElementById('mode-original').classList.toggle('active', mode === 'original');
+  document.getElementById('mode-imitate').classList.toggle('active', mode === 'imitate');
+  document.getElementById('original-fields').style.display = mode === 'original' ? 'block' : 'none';
+  document.getElementById('imitate-fields').style.display = mode === 'imitate' ? 'block' : 'none';
+}
+
+function showResult() {
+  document.getElementById('gen-state').style.display = 'block';
+  document.getElementById('result-state').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'none';
+  setTimeout(() => {
+    document.getElementById('gen-state').style.display = 'none';
+    document.getElementById('result-state').style.display = 'block';
+  }, 1800);
+}
+</script>
+</body>
+</html>

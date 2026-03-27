@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>码字激励系统 效果图</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#c0392b',
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f9fafb; }
+  .badge-locked { filter: grayscale(1); opacity: 0.35; }
+  .badge-glow { box-shadow: 0 0 16px 4px #fbbf2488; }
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .shimmer {
+    background: linear-gradient(90deg, #fbbf24 0%, #fde68a 40%, #fbbf24 60%, #f59e0b 100%);
+    background-size: 200% auto;
+    animation: shimmer 2s linear infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .pop-in { animation: popIn 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+  .badge-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .badge-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+  .progress-bar {
+    background: linear-gradient(90deg, #ef4444, #f97316, #eab308);
+    border-radius: 9999px;
+  }
+  .unlock-overlay {
+    background: radial-gradient(ellipse at center, rgba(251,191,36,0.25) 0%, rgba(0,0,0,0.75) 70%);
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== 主页面：Writing页面上半部分 ========== -->
+<div class="flex min-h-screen bg-gray-50">
+
+  <!-- 左侧导航 -->
+  <aside class="w-52 bg-white border-r border-gray-200 flex flex-col shadow-sm flex-shrink-0">
+    <div class="p-4 border-b border-gray-100">
+      <h1 class="text-xl font-bold text-red-600">🍛 咖喱小助手</h1>
+      <p class="text-xs text-gray-400 mt-0.5">写作资源管理库</p>
+    </div>
+    <nav class="flex-1 p-2 space-y-0.5">
+      <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">🎯 每日灵感</a>
+      <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-600">✍️ 码字计划</a>
+      <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600">📂 分类浏览</a>
+      <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600">🔍 搜索文章</a>
+      <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600">🏷️ 标签管理</a>
+      <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600">📊 数据统计</a>
+      <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600">📥 导入文章</a>
+      <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600">🎬 故事框架</a>
+      <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600">🤖 批量分析</a>
+    </nav>
+    <div class="p-3 border-t border-gray-100">
+      <button class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-400">退出登录</button>
+    </div>
+  </aside>
+
+  <!-- 右侧主内容 -->
+  <main class="flex-1 overflow-auto">
+    <div class="max-w-5xl mx-auto p-6 space-y-5">
+
+      <!-- 页面标题 -->
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-800">✍️ 码字计划</h2>
+        <div class="flex gap-2">
+          <button class="text-sm px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 font-medium border border-amber-200">🏆 成就陈列室</button>
+          <button class="text-sm px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500">⚙️ 设置目标</button>
+        </div>
+      </div>
+
+      <!-- ===== 成就横幅区域 ===== -->
+      <div class="bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border border-amber-200 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🏆</span>
+            <span class="font-semibold text-amber-700 text-sm">我的成就</span>
+            <span class="bg-amber-100 text-amber-600 text-xs px-2 py-0.5 rounded-full font-medium">已解锁 12 / 200</span>
+          </div>
+          <button class="text-xs text-amber-500 hover:text-amber-700">查看全部 →</button>
+        </div>
+
+        <!-- 最近解锁 -->
+        <div class="flex gap-3 flex-wrap">
+          <!-- 最新解锁（高亮） -->
+          <div class="badge-card bg-white rounded-xl p-3 flex items-center gap-2.5 shadow-sm border-2 border-amber-300 badge-glow relative">
+            <div class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">新</div>
+            <div class="text-2xl">🔥</div>
+            <div>
+              <div class="text-xs font-bold text-gray-800">周更达人</div>
+              <div class="text-xs text-amber-500 font-medium">连续7天达标</div>
+            </div>
+          </div>
+
+          <div class="badge-card bg-white rounded-xl p-3 flex items-center gap-2.5 shadow-sm border border-gray-100">
+            <div class="text-2xl">⚡</div>
+            <div>
+              <div class="text-xs font-bold text-gray-800">爆发一日</div>
+              <div class="text-xs text-gray-400">单日5000字</div>
+            </div>
+          </div>
+
+          <div class="badge-card bg-white rounded-xl p-3 flex items-center gap-2.5 shadow-sm border border-gray-100">
+            <div class="text-2xl">📚</div>
+            <div>
+              <div class="text-xs font-bold text-gray-800">初尝甜头</div>
+              <div class="text-xs text-gray-400">累计1万字</div>
+            </div>
+          </div>
+
+          <div class="badge-card bg-white rounded-xl p-3 flex items-center gap-2.5 shadow-sm border border-gray-100">
+            <div class="text-2xl">🌅</div>
+            <div>
+              <div class="text-xs font-bold text-gray-800">开门红</div>
+              <div class="text-xs text-gray-400">月第一天达标</div>
+            </div>
+          </div>
+
+          <div class="badge-card bg-white rounded-xl p-3 flex items-center gap-2.5 shadow-sm border border-gray-100">
+            <div class="text-2xl">🎯</div>
+            <div>
+              <div class="text-xs font-bold text-gray-800">初出茅庐</div>
+              <div class="text-xs text-gray-400">首次打卡</div>
+            </div>
+          </div>
+
+          <!-- 进度中的徽章 -->
+          <div class="badge-card bg-white rounded-xl p-3 flex items-center gap-2.5 shadow-sm border border-dashed border-gray-200">
+            <div class="text-2xl opacity-40">🔥</div>
+            <div>
+              <div class="text-xs font-bold text-gray-400">月度勇士</div>
+              <div class="text-xs text-gray-300">连续30天 (7/30)</div>
+              <div class="mt-1 w-20 h-1 bg-gray-100 rounded-full overflow-hidden">
+                <div class="progress-bar h-full" style="width:23%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="badge-card bg-white rounded-xl p-3 flex items-center gap-2.5 shadow-sm border border-dashed border-gray-200">
+            <div class="text-2xl opacity-40">📚</div>
+            <div>
+              <div class="text-xs font-bold text-gray-400">著作等身</div>
+              <div class="text-xs text-gray-300">累计5万字 (1.8万/5万)</div>
+              <div class="mt-1 w-20 h-1 bg-gray-100 rounded-full overflow-hidden">
+                <div class="progress-bar h-full" style="width:36%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 今日+月度 两列 -->
+      <div class="grid grid-cols-2 gap-5">
+        <!-- 今日卡 -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-700">今日进度</h3>
+            <span class="text-xs text-gray-400">2026-03-19 周四</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="relative w-28 h-14 flex-shrink-0">
+              <svg viewBox="0 0 120 65" class="w-full">
+                <path d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="#f3f4f6" stroke-width="10" stroke-linecap="round"/>
+                <path d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="#ef4444" stroke-width="10" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="62"/>
+                <text x="60" y="58" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">60%</text>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <div class="text-2xl font-bold text-gray-800">1,820<span class="text-sm font-normal text-gray-400"> / 3,000字</span></div>
+              <div class="text-sm text-gray-400 mt-0.5">还差 1,180 字</div>
+              <div class="flex items-center gap-1 mt-1.5">
+                <span class="text-orange-500 text-xs">🔥</span>
+                <span class="text-xs text-orange-500 font-medium">已连续 7 天达标</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 flex gap-2">
+            <input type="number" placeholder="今日实际字数" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-300" value="1820"/>
+            <button class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600">保存</button>
+          </div>
+        </div>
+
+        <!-- 月度卡 -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-700">本月总览</h3>
+            <span class="text-xs text-gray-400">2026年3月</span>
+          </div>
+          <div class="flex items-center gap-3 mb-3">
+            <div>
+              <div class="text-2xl font-bold text-gray-800">18,450<span class="text-sm font-normal text-gray-400"> / 100,000字</span></div>
+              <div class="text-sm text-gray-400">已完成 18.5%</div>
+            </div>
+          </div>
+          <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="progress-bar h-full rounded-full" style="width:18.5%"></div>
+          </div>
+          <div class="flex gap-4 mt-3 text-xs text-gray-400">
+            <span>✅ 已达标 <b class="text-gray-700">7天</b></span>
+            <span>❌ 未达标 <b class="text-gray-700">12天</b></span>
+            <span>⏳ 剩余 <b class="text-gray-700">12天</b></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ========== 弹窗1：解锁庆祝 ========== -->
+<!-- 这个放在右下角展示 -->
+<div style="position:fixed;bottom:28px;right:28px;z-index:50;">
+  <div class="pop-in bg-white rounded-2xl shadow-2xl border-2 border-amber-300 p-5 w-72" style="box-shadow:0 0 40px rgba(251,191,36,0.4)">
+    <div class="text-center">
+      <div class="text-5xl mb-2">🔥</div>
+      <div class="shimmer text-lg font-black mb-1">成就解锁！</div>
+      <div class="text-gray-800 font-bold text-base">周更达人</div>
+      <div class="text-gray-400 text-xs mt-1">连续7天完成每日目标</div>
+      <div class="mt-3 text-xs text-amber-500 bg-amber-50 rounded-lg py-2 px-3">
+        🎉 继续加油！再坚持 23 天可解锁「月度勇士」
+      </div>
+      <button class="mt-3 text-xs text-gray-400 hover:text-gray-600">关闭</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

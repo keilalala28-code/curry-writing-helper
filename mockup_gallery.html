@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>成就陈列室</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #1a1a2e; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .badge-locked { filter: grayscale(1) brightness(0.6); }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+  .float { animation: float 3s ease-in-out infinite; }
+  .badge-item { transition: transform 0.2s; cursor: pointer; }
+  .badge-item:hover { transform: scale(1.05); }
+  .glow-gold { box-shadow: 0 0 12px 3px rgba(251,191,36,0.5); }
+  .tab-active { background: rgba(251,191,36,0.15); color: #fbbf24; border-bottom: 2px solid #fbbf24; }
+</style>
+</head>
+<body>
+
+<div class="bg-gray-900 rounded-3xl shadow-2xl w-[900px] max-h-[90vh] overflow-hidden flex flex-col" style="border: 1px solid rgba(255,255,255,0.08)">
+
+  <!-- 顶部标题 -->
+  <div class="px-7 pt-6 pb-4 border-b border-white/10">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-white text-xl font-bold">🏆 成就陈列室</h2>
+        <p class="text-gray-400 text-sm mt-0.5">已解锁 <span class="text-amber-400 font-bold">12</span> / 200 枚徽章</p>
+      </div>
+      <!-- 总进度条 -->
+      <div class="text-right">
+        <div class="text-xs text-gray-400 mb-1.5">总完成度 6%</div>
+        <div class="w-48 h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div class="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400" style="width:6%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分类标签 -->
+    <div class="flex gap-1 mt-4 text-xs">
+      <button class="tab-active px-3 py-1.5 rounded-t-lg font-medium">全部 (200)</button>
+      <button class="px-3 py-1.5 rounded-t-lg text-gray-400 hover:text-gray-200">🔥 连续打卡 (20)</button>
+      <button class="px-3 py-1.5 rounded-t-lg text-gray-400 hover:text-gray-200">⚡ 单日爆发 (20)</button>
+      <button class="px-3 py-1.5 rounded-t-lg text-gray-400 hover:text-gray-200">📚 累计里程 (20)</button>
+      <button class="px-3 py-1.5 rounded-t-lg text-gray-400 hover:text-gray-200">🗓️ 月度成就 (20)</button>
+      <button class="px-3 py-1.5 rounded-t-lg text-gray-400 hover:text-gray-200">🌟 稀有成就 (20)</button>
+      <button class="px-3 py-1.5 rounded-t-lg text-gray-400 hover:text-gray-200">🎭 隐藏彩蛋 (20)</button>
+    </div>
+  </div>
+
+  <!-- 徽章网格 -->
+  <div class="flex-1 overflow-y-auto p-6">
+
+    <!-- 分类：连续打卡 -->
+    <div class="mb-6">
+      <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">🔥 连续打卡</h3>
+      <div class="grid grid-cols-8 gap-3">
+
+        <!-- 已解锁 -->
+        <div class="badge-item float text-center">
+          <div class="w-14 h-14 mx-auto bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center text-2xl glow-gold mb-1.5 shadow-lg">🔥</div>
+          <div class="text-white text-xs font-medium leading-tight">初次点火</div>
+          <div class="text-amber-400 text-xs">连续3天</div>
+        </div>
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center text-2xl glow-gold mb-1.5 shadow-lg">🔥</div>
+          <div class="text-white text-xs font-medium leading-tight">周更达人</div>
+          <div class="text-amber-400 text-xs">连续7天</div>
+        </div>
+
+        <!-- 进行中（半透明边框） -->
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5 border-2 border-dashed border-orange-800 relative">
+            <span class="badge-locked">🔥</span>
+            <div class="absolute bottom-0.5 left-0 right-0 h-1 bg-gray-700 mx-1 rounded-full overflow-hidden">
+              <div class="h-full bg-orange-500 rounded-full" style="width:50%"></div>
+            </div>
+          </div>
+          <div class="text-gray-400 text-xs font-medium">双周勇士</div>
+          <div class="text-orange-800 text-xs">7/14天</div>
+        </div>
+
+        <!-- 锁定 -->
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">🔥</div>
+          <div class="text-gray-500 text-xs font-medium">三周精英</div>
+          <div class="text-gray-600 text-xs">连续21天</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">🔥</div>
+          <div class="text-gray-500 text-xs font-medium">月度勇士</div>
+          <div class="text-gray-600 text-xs">连续30天</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">🔥</div>
+          <div class="text-gray-500 text-xs font-medium">铁打意志</div>
+          <div class="text-gray-600 text-xs">连续45天</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">🔥</div>
+          <div class="text-gray-500 text-xs font-medium">两月不息</div>
+          <div class="text-gray-600 text-xs">连续60天</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">🔥</div>
+          <div class="text-gray-500 text-xs font-medium">季度传说</div>
+          <div class="text-gray-600 text-xs">连续90天</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分类：单日爆发 -->
+    <div class="mb-6">
+      <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">⚡ 单日爆发</h3>
+      <div class="grid grid-cols-8 gap-3">
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl flex items-center justify-center text-2xl glow-gold mb-1.5 shadow-lg">⚡</div>
+          <div class="text-white text-xs font-medium">小试牛刀</div>
+          <div class="text-amber-400 text-xs">单日2000字</div>
+        </div>
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl flex items-center justify-center text-2xl glow-gold mb-1.5 shadow-lg">⚡</div>
+          <div class="text-white text-xs font-medium">爆发一日</div>
+          <div class="text-amber-400 text-xs">单日5000字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">⚡</div>
+          <div class="text-gray-500 text-xs font-medium">一万字侠</div>
+          <div class="text-gray-600 text-xs">单日1万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">⚡</div>
+          <div class="text-gray-500 text-xs font-medium">字如泉涌</div>
+          <div class="text-gray-600 text-xs">单日2万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">⚡</div>
+          <div class="text-gray-500 text-xs font-medium">封神之日</div>
+          <div class="text-gray-600 text-xs">单日5万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">🌙</div>
+          <div class="text-gray-500 text-xs font-medium">夜猫子</div>
+          <div class="text-gray-600 text-xs">0-3点达标</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">🌄</div>
+          <div class="text-gray-500 text-xs font-medium">破晓先锋</div>
+          <div class="text-gray-600 text-xs">6点前打卡</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">⚡</div>
+          <div class="text-gray-500 text-xs font-medium">百倍超神</div>
+          <div class="text-gray-600 text-xs">超目标300%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分类：累计里程碑 -->
+    <div class="mb-6">
+      <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">📚 累计里程碑</h3>
+      <div class="grid grid-cols-8 gap-3">
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center text-2xl glow-gold mb-1.5 shadow-lg">📚</div>
+          <div class="text-white text-xs font-medium">初尝甜头</div>
+          <div class="text-amber-400 text-xs">累计1万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">📚</div>
+          <div class="text-gray-500 text-xs font-medium">渐入佳境</div>
+          <div class="text-gray-600 text-xs">累计5万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">📚</div>
+          <div class="text-gray-500 text-xs font-medium">著作等身</div>
+          <div class="text-gray-600 text-xs">累计10万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">📚</div>
+          <div class="text-gray-500 text-xs font-medium">半部书稿</div>
+          <div class="text-gray-600 text-xs">累计50万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">👑</div>
+          <div class="text-gray-500 text-xs font-medium">百万作家</div>
+          <div class="text-gray-600 text-xs">累计100万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">📚</div>
+          <div class="text-gray-500 text-xs font-medium">长河叙事</div>
+          <div class="text-gray-600 text-xs">累计200万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">🌌</div>
+          <div class="text-gray-500 text-xs font-medium">文字宇宙</div>
+          <div class="text-gray-600 text-xs">累计500万字</div>
+        </div>
+
+        <div class="badge-item text-center opacity-40">
+          <div class="w-14 h-14 mx-auto bg-gray-800 rounded-2xl flex items-center justify-center text-2xl mb-1.5">📚</div>
+          <div class="text-gray-500 text-xs font-medium">连载之王</div>
+          <div class="text-gray-600 text-xs">单月20万字</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分类：隐藏彩蛋 -->
+    <div class="mb-2">
+      <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">🎭 隐藏彩蛋 <span class="text-gray-600 font-normal normal-case tracking-normal">（解锁前不透露条件）</span></h3>
+      <div class="grid grid-cols-8 gap-3">
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gradient-to-br from-pink-400 to-rose-600 rounded-2xl flex items-center justify-center text-2xl glow-gold mb-1.5 shadow-lg">🎭</div>
+          <div class="text-white text-xs font-medium">谜之写手</div>
+          <div class="text-pink-400 text-xs">已解锁</div>
+        </div>
+
+        <!-- 未知 -->
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gray-800/50 rounded-2xl flex items-center justify-center text-2xl mb-1.5 border border-gray-700" style="background: repeating-linear-gradient(45deg, #1f2937, #1f2937 5px, #111827 5px, #111827 10px)">
+            <span class="text-gray-600 text-3xl">?</span>
+          </div>
+          <div class="text-gray-600 text-xs font-medium">???</div>
+          <div class="text-gray-700 text-xs">未解锁</div>
+        </div>
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gray-800/50 rounded-2xl flex items-center justify-center text-2xl mb-1.5 border border-gray-700" style="background: repeating-linear-gradient(45deg, #1f2937, #1f2937 5px, #111827 5px, #111827 10px)">
+            <span class="text-gray-600 text-3xl">?</span>
+          </div>
+          <div class="text-gray-600 text-xs font-medium">???</div>
+          <div class="text-gray-700 text-xs">未解锁</div>
+        </div>
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gray-800/50 rounded-2xl flex items-center justify-center text-2xl mb-1.5 border border-gray-700" style="background: repeating-linear-gradient(45deg, #1f2937, #1f2937 5px, #111827 5px, #111827 10px)">
+            <span class="text-gray-600 text-3xl">?</span>
+          </div>
+          <div class="text-gray-600 text-xs font-medium">???</div>
+          <div class="text-gray-700 text-xs">未解锁</div>
+        </div>
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gray-800/50 rounded-2xl flex items-center justify-center text-2xl mb-1.5 border border-gray-700" style="background: repeating-linear-gradient(45deg, #1f2937, #1f2937 5px, #111827 5px, #111827 10px)">
+            <span class="text-gray-600 text-3xl">?</span>
+          </div>
+          <div class="text-gray-600 text-xs font-medium">???</div>
+          <div class="text-gray-700 text-xs">未解锁</div>
+        </div>
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gray-800/50 rounded-2xl flex items-center justify-center text-2xl mb-1.5 border border-gray-700" style="background: repeating-linear-gradient(45deg, #1f2937, #1f2937 5px, #111827 5px, #111827 10px)">
+            <span class="text-gray-600 text-3xl">?</span>
+          </div>
+          <div class="text-gray-600 text-xs font-medium">???</div>
+          <div class="text-gray-700 text-xs">未解锁</div>
+        </div>
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gray-800/50 rounded-2xl flex items-center justify-center text-2xl mb-1.5 border border-gray-700" style="background: repeating-linear-gradient(45deg, #1f2937, #1f2937 5px, #111827 5px, #111827 10px)">
+            <span class="text-gray-600 text-3xl">?</span>
+          </div>
+          <div class="text-gray-600 text-xs font-medium">???</div>
+          <div class="text-gray-700 text-xs">未解锁</div>
+        </div>
+
+        <div class="badge-item text-center">
+          <div class="w-14 h-14 mx-auto bg-gray-800/50 rounded-2xl flex items-center justify-center text-2xl mb-1.5 border border-gray-700" style="background: repeating-linear-gradient(45deg, #1f2937, #1f2937 5px, #111827 5px, #111827 10px)">
+            <span class="text-gray-600 text-3xl">?</span>
+          </div>
+          <div class="text-gray-600 text-xs font-medium">???</div>
+          <div class="text-gray-700 text-xs">未解锁</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部关闭 -->
+  <div class="px-7 py-4 border-t border-white/10 flex justify-between items-center">
+    <div class="text-gray-500 text-xs">💡 提示：隐藏彩蛋需要自己探索发现</div>
+    <button class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-semibold text-sm px-5 py-2 rounded-xl">关闭</button>
+  </div>
+</div>
+
+</body>
+</html>

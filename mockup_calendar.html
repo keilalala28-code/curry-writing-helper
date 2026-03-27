@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月度日历总览 - 效果图</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; background: #f8f7f4; display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 208px; background: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-logo { padding: 16px; border-bottom: 1px solid #f3f4f6; }
+  .sidebar-logo h1 { font-size: 18px; font-weight: 700; color: #e85d26; }
+  .sidebar-logo p { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .nav-item { display: block; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #6b7280; margin: 1px 8px; cursor: pointer; }
+  .nav-item:hover { background: #f3f4f6; }
+  .nav-item.active { background: #fff1ec; color: #e85d26; }
+
+  /* Main */
+  .main { flex: 1; overflow: auto; padding: 24px; }
+  .content { max-width: 1000px; margin: 0 auto; }
+
+  /* Page header */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .page-title { font-size: 22px; font-weight: 700; color: #1f2937; display: flex; align-items: center; gap: 10px; }
+  .view-tabs { display: flex; background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 3px; gap: 2px; }
+  .view-tab { padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: #6b7280; border: none; background: none; }
+  .view-tab.active { background: #e85d26; color: white; }
+  .btn { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #e5e7eb; background: white; color: #6b7280; }
+
+  /* Two-column layout */
+  .two-col { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: start; }
+
+  /* Calendar card */
+  .calendar-card { background: white; border-radius: 16px; border: 1px solid #f0ede8; overflow: hidden; }
+  .cal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px; border-bottom: 1px solid #f9f6f2; }
+  .cal-month { font-size: 18px; font-weight: 700; color: #1f2937; }
+  .cal-year { font-size: 14px; color: #9ca3af; margin-left: 6px; font-weight: 400; }
+  .cal-nav { display: flex; gap: 6px; }
+  .cal-nav-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #e5e7eb; background: white; cursor: pointer; font-size: 14px; color: #6b7280; display: flex; align-items: center; justify-content: center; }
+
+  /* Week header */
+  .week-header { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 12px 4px; }
+  .week-day { text-align: center; font-size: 11px; font-weight: 600; color: #9ca3af; letter-spacing: 0.05em; padding: 4px 0; }
+  .week-day.sun { color: #f87171; }
+  .week-day.sat { color: #60a5fa; }
+
+  /* Calendar grid */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 6px 12px 12px; gap: 4px; }
+  .cal-cell { aspect-ratio: 1; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; padding: 4px; transition: all 0.15s; }
+  .cal-cell:hover { transform: scale(1.05); z-index: 1; }
+  .cal-cell.other-month { opacity: 0.2; cursor: default; }
+  .cal-cell.other-month:hover { transform: none; }
+  .day-num { font-size: 13px; font-weight: 600; line-height: 1; }
+  .day-dots { display: flex; gap: 2px; margin-top: 3px; }
+  .dot { width: 4px; height: 4px; border-radius: 50%; }
+  .day-pct { font-size: 9px; font-weight: 700; margin-top: 2px; line-height: 1; }
+
+  /* Day states */
+  .day-perfect { background: #d1fae5; }
+  .day-perfect .day-num { color: #065f46; }
+  .day-perfect .day-pct { color: #059669; }
+
+  .day-good { background: #fef9c3; }
+  .day-good .day-num { color: #713f12; }
+  .day-good .day-pct { color: #ca8a04; }
+
+  .day-low { background: #fee2e2; }
+  .day-low .day-num { color: #7f1d1d; }
+  .day-low .day-pct { color: #dc2626; }
+
+  .day-empty { background: #f9fafb; }
+  .day-empty .day-num { color: #d1d5db; }
+
+  .day-today { background: #e85d26 !important; box-shadow: 0 4px 12px rgba(232,93,38,0.35); }
+  .day-today .day-num { color: white !important; }
+  .day-today .day-pct { color: rgba(255,255,255,0.8) !important; }
+  .day-today .dot { background: rgba(255,255,255,0.6) !important; }
+
+  .day-future { background: #f9fafb; }
+  .day-future .day-num { color: #9ca3af; }
+
+  /* Legend */
+  .legend { display: flex; gap: 12px; padding: 10px 20px 14px; border-top: 1px solid #f9f6f2; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6b7280; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+  /* Right panel */
+  .right-panel { display: flex; flex-direction: column; gap: 12px; }
+
+  /* Month stats */
+  .month-stats { background: white; border-radius: 16px; border: 1px solid #f0ede8; padding: 18px; }
+  .panel-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 14px; display: flex; align-items: center; gap-6px; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f9f6f2; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-name { font-size: 12px; color: #6b7280; }
+  .stat-val { font-size: 14px; font-weight: 700; color: #1f2937; }
+  .stat-val.orange { color: #e85d26; }
+  .stat-val.green { color: #10b981; }
+
+  /* Streak calendar */
+  .streak-card { background: white; border-radius: 16px; border: 1px solid #f0ede8; padding: 18px; }
+  .streak-num { font-size: 36px; font-weight: 800; color: #e85d26; line-height: 1; }
+  .streak-label { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+  .streak-bar { display: flex; gap: 3px; margin-top: 12px; flex-wrap: wrap; }
+  .streak-dot { width: 18px; height: 18px; border-radius: 4px; }
+
+  /* Heatmap mini */
+  .heatmap-card { background: white; border-radius: 16px; border: 1px solid #f0ede8; padding: 18px; }
+  .heatmap-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 12px; }
+  .heatmap-row { display: flex; gap: 3px; margin-bottom: 3px; }
+  .heatmap-cell { width: 16px; height: 16px; border-radius: 3px; }
+
+  /* Selected day detail */
+  .day-detail { background: white; border-radius: 16px; border: 1px solid #f0ede8; padding: 18px; }
+  .detail-date { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 12px; }
+  .detail-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f9f6f2; }
+  .detail-item:last-child { border-bottom: none; }
+  .detail-check { width: 16px; height: 16px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+  .detail-check.done { background: #10b981; color: white; }
+  .detail-check.skip { background: #f3f4f6; color: #9ca3af; }
+  .detail-text { font-size: 12px; color: #374151; }
+  .detail-text.skip { color: #d1d5db; text-decoration: line-through; }
+  .detail-time { font-size: 11px; color: #9ca3af; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🍛 咖喱小助手</h1>
+    <p>写作资源管理库</p>
+  </div>
+  <nav style="padding:8px">
+    <div class="nav-item">🎯 每日灵感</div>
+    <div class="nav-item">✍️ 码字计划</div>
+    <div class="nav-item">📂 分类浏览</div>
+    <div class="nav-item">🔍 搜索文章</div>
+    <div class="nav-item">🏷️ 标签管理</div>
+    <div class="nav-item">📊 数据统计</div>
+    <div class="nav-item active">📅 每日日程</div>
+    <div class="nav-item">🎬 故事框架</div>
+  </nav>
+</div>
+
+<div class="main">
+<div class="content">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-title">
+      📅 每日日程
+      <span style="font-size:13px;color:#9ca3af;font-weight:400">月度总览</span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="view-tabs">
+        <button class="view-tab">今日</button>
+        <button class="view-tab active">月历</button>
+      </div>
+      <button class="btn">📤 导出报告</button>
+    </div>
+  </div>
+
+  <div class="two-col">
+
+    <!-- Calendar -->
+    <div class="calendar-card">
+      <div class="cal-header">
+        <div>
+          <span class="cal-month">三月</span>
+          <span class="cal-year">2026</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:12px;color:#9ca3af">本月均完成率</span>
+          <span style="font-size:16px;font-weight:700;color:#e85d26">62%</span>
+          <div class="cal-nav">
+            <button class="cal-nav-btn">‹</button>
+            <button class="cal-nav-btn">›</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="week-header">
+        <div class="week-day sun">日</div>
+        <div class="week-day">一</div>
+        <div class="week-day">二</div>
+        <div class="week-day">三</div>
+        <div class="week-day">四</div>
+        <div class="week-day">五</div>
+        <div class="week-day sat">六</div>
+      </div>
+
+      <div class="cal-grid">
+        <!-- Week 1: Mar 1 starts on Sunday -->
+        <div class="cal-cell day-perfect">
+          <div class="day-num">1</div>
+          <div class="day-pct">100%</div>
+        </div>
+        <div class="cal-cell day-perfect">
+          <div class="day-num">2</div>
+          <div class="day-pct">93%</div>
+        </div>
+        <div class="cal-cell day-good">
+          <div class="day-num">3</div>
+          <div class="day-pct">71%</div>
+        </div>
+        <div class="cal-cell day-good">
+          <div class="day-num">4</div>
+          <div class="day-pct">64%</div>
+        </div>
+        <div class="cal-cell day-perfect">
+          <div class="day-num">5</div>
+          <div class="day-pct">86%</div>
+        </div>
+        <div class="cal-cell day-perfect">
+          <div class="day-num">6</div>
+          <div class="day-pct">100%</div>
+        </div>
+        <div class="cal-cell day-good">
+          <div class="day-num">7</div>
+          <div class="day-pct">57%</div>
+        </div>
+
+        <!-- Week 2 -->
+        <div class="cal-cell day-perfect">
+          <div class="day-num">8</div>
+          <div class="day-pct">93%</div>
+        </div>
+        <div class="cal-cell day-good">
+          <div class="day-num">9</div>
+          <div class="day-pct">71%</div>
+        </div>
+        <div class="cal-cell day-low">
+          <div class="day-num">10</div>
+          <div class="day-pct">28%</div>
+        </div>
+        <div class="cal-cell day-good">
+          <div class="day-num">11</div>
+          <div class="day-pct">64%</div>
+        </div>
+        <div class="cal-cell day-perfect">
+          <div class="day-num">12</div>
+          <div class="day-pct">86%</div>
+        </div>
+        <div class="cal-cell day-perfect">
+          <div class="day-num">13</div>
+          <div class="day-pct">100%</div>
+        </div>
+        <div class="cal-cell day-low">
+          <div class="day-num">14</div>
+          <div class="day-pct">35%</div>
+        </div>
+
+        <!-- Week 3 -->
+        <div class="cal-cell day-perfect">
+          <div class="day-num">15</div>
+          <div class="day-pct">93%</div>
+        </div>
+        <div class="cal-cell day-good">
+          <div class="day-num">16</div>
+          <div class="day-pct">78%</div>
+        </div>
+        <div class="cal-cell day-perfect">
+          <div class="day-num">17</div>
+          <div class="day-pct">100%</div>
+        </div>
+        <div class="cal-cell day-perfect">
+          <div class="day-num">18</div>
+          <div class="day-pct">86%</div>
+        </div>
+        <div class="cal-cell day-good">
+          <div class="day-num">19</div>
+          <div class="day-pct">71%</div>
+        </div>
+        <!-- Today: March 20 -->
+        <div class="cal-cell day-today" style="cursor:pointer">
+          <div class="day-num">20</div>
+          <div class="day-pct">45%</div>
+        </div>
+        <div class="cal-cell day-future">
+          <div class="day-num">21</div>
+        </div>
+
+        <!-- Week 4 -->
+        <div class="cal-cell day-future"><div class="day-num">22</div></div>
+        <div class="cal-cell day-future"><div class="day-num">23</div></div>
+        <div class="cal-cell day-future"><div class="day-num">24</div></div>
+        <div class="cal-cell day-future"><div class="day-num">25</div></div>
+        <div class="cal-cell day-future"><div class="day-num">26</div></div>
+        <div class="cal-cell day-future"><div class="day-num">27</div></div>
+        <div class="cal-cell day-future"><div class="day-num">28</div></div>
+
+        <!-- Week 5 -->
+        <div class="cal-cell day-future"><div class="day-num">29</div></div>
+        <div class="cal-cell day-future"><div class="day-num">30</div></div>
+        <div class="cal-cell day-future"><div class="day-num">31</div></div>
+        <div class="cal-cell other-month"><div class="day-num">1</div></div>
+        <div class="cal-cell other-month"><div class="day-num">2</div></div>
+        <div class="cal-cell other-month"><div class="day-num">3</div></div>
+        <div class="cal-cell other-month"><div class="day-num">4</div></div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#d1fae5"></div>优秀 ≥80%</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fef9c3"></div>良好 50-79%</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fee2e2"></div>待提升 &lt;50%</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e85d26;border-radius:50%"></div>今天</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f3f4f6"></div>未来</div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div class="right-panel">
+
+      <!-- Month stats -->
+      <div class="month-stats">
+        <div class="panel-title">📊 本月数据</div>
+        <div class="stat-row">
+          <div class="stat-name">已记录天数</div>
+          <div class="stat-val">20 天</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-name">平均完成率</div>
+          <div class="stat-val orange">62%</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-name">满分天数（100%）</div>
+          <div class="stat-val green">4 天</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-name">最高连续打卡</div>
+          <div class="stat-val orange">7 天</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-name">本月最佳单日</div>
+          <div class="stat-val">3月1日</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-name">最常跳过事项</div>
+          <div class="stat-val" style="font-size:12px;color:#e85d26">肩颈拉伸</div>
+        </div>
+      </div>
+
+      <!-- Streak -->
+      <div class="streak-card">
+        <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:4px">
+          <div class="streak-num">7</div>
+          <div style="margin-bottom:6px">
+            <div style="font-size:13px;font-weight:700;color:#374151">天连续打卡 🔥</div>
+            <div style="font-size:11px;color:#9ca3af">历史最高 12 天</div>
+          </div>
+        </div>
+        <div class="streak-bar">
+          <!-- Last 21 days as dots -->
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#fef9c3"></div>
+          <div class="streak-dot" style="background:#fee2e2"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#fef9c3"></div>
+          <div class="streak-dot" style="background:#fee2e2"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#fef9c3"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#fef9c3"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#fef9c3"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#d1fae5"></div>
+          <div class="streak-dot" style="background:#fef9c3"></div>
+          <div class="streak-dot" style="background:#e85d26;box-shadow:0 2px 6px rgba(232,93,38,0.4)"></div>
+          <div class="streak-dot" style="background:#f3f4f6;border:1px dashed #d1d5db"></div>
+        </div>
+        <div style="font-size:10px;color:#9ca3af;margin-top:6px">← 过去21天 · 今天 →</div>
+      </div>
+
+      <!-- Selected Day Detail -->
+      <div class="day-detail">
+        <div class="detail-date">📋 3月20日（今天）进度</div>
+        <div class="detail-item">
+          <div class="detail-check done">✓</div>
+          <div class="detail-text">起床 · 洗漱 · 喝水</div>
+          <div class="detail-time">6:20</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-check done">✓</div>
+          <div class="detail-text">运动拉伸</div>
+          <div class="detail-time">6:30</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-check done">✓</div>
+          <div class="detail-text">写晨间日记 · 记账</div>
+          <div class="detail-time">6:45</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-check done">✓</div>
+          <div class="detail-text">护肤 · 化妆</div>
+          <div class="detail-time">7:00</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-check done">✓</div>
+          <div class="detail-text">出门坐公交</div>
+          <div class="detail-time">7:20</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-check skip">○</div>
+          <div class="detail-text">食堂吃饭 · 泡养生茶</div>
+          <div class="detail-time">8:00</div>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #f3f4f6;font-size:11px;color:#9ca3af;text-align:center">
+          进行中 · 5/14 已完成
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日日程 SOP - 效果图</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f7f4; display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 208px; background: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-logo { padding: 16px; border-bottom: 1px solid #f3f4f6; }
+  .sidebar-logo h1 { font-size: 18px; font-weight: 700; color: #e85d26; }
+  .sidebar-logo p { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 8px; }
+  .nav-item { display: block; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #6b7280; margin-bottom: 2px; cursor: pointer; }
+  .nav-item:hover { background: #f3f4f6; }
+  .nav-item.active { background: #fff1ec; color: #e85d26; }
+
+  /* Main Content */
+  .main { flex: 1; overflow: auto; }
+  .content { max-width: 900px; margin: 0 auto; padding: 24px; }
+
+  /* Header */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-size: 22px; font-weight: 700; color: #1f2937; display: flex; align-items: center; gap: 8px; }
+  .page-subtitle { font-size: 13px; color: #9ca3af; margin-top: 4px; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .btn { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; }
+  .btn-primary { background: #e85d26; color: white; }
+  .btn-outline { background: white; color: #6b7280; border: 1px solid #e5e7eb; }
+
+  /* Stats Bar */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: white; border-radius: 12px; padding: 14px 16px; border: 1px solid #f0ede8; }
+  .stat-label { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: #1f2937; }
+  .stat-value.orange { color: #e85d26; }
+  .stat-value.green { color: #10b981; }
+  .stat-value.blue { color: #3b82f6; }
+
+  /* Progress Bar */
+  .progress-wrap { background: white; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; border: 1px solid #f0ede8; }
+  .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .progress-label { font-size: 13px; font-weight: 600; color: #374151; }
+  .progress-pct { font-size: 13px; font-weight: 700; color: #e85d26; }
+  .progress-track { background: #f3f4f6; border-radius: 99px; height: 8px; }
+  .progress-fill { background: linear-gradient(to right, #e85d26, #f97316); border-radius: 99px; height: 8px; width: 45%; transition: width 0.5s; }
+  .time-sections { display: flex; gap: 16px; margin-top: 10px; }
+  .time-section-tag { font-size: 11px; padding: 2px 10px; border-radius: 99px; font-weight: 500; }
+  .tag-morning { background: #fef9c3; color: #a16207; }
+  .tag-noon { background: #dcfce7; color: #166534; }
+  .tag-evening { background: #ede9fe; color: #6d28d9; }
+
+  /* Current Task Banner */
+  .current-banner { background: linear-gradient(135deg, #e85d26 0%, #f97316 100%); border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; color: white; display: flex; align-items: center; justify-content: space-between; }
+  .current-banner-left { display: flex; align-items: center; gap: 12px; }
+  .pulse-dot { width: 10px; height: 10px; background: white; border-radius: 50%; animation: pulse 1.5s infinite; opacity: 0.9; }
+  @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.3); opacity: 0.6; } }
+  .current-label { font-size: 11px; opacity: 0.85; }
+  .current-task { font-size: 16px; font-weight: 700; }
+  .current-time { font-size: 13px; opacity: 0.8; }
+  .next-up { text-align: right; }
+  .next-label { font-size: 11px; opacity: 0.75; }
+  .next-task { font-size: 14px; font-weight: 600; }
+  .next-time { font-size: 12px; opacity: 0.75; }
+
+  /* Timeline */
+  .timeline-section { background: white; border-radius: 14px; border: 1px solid #f0ede8; overflow: hidden; margin-bottom: 16px; }
+  .section-header { padding: 14px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f9f6f2; }
+  .section-icon { font-size: 18px; }
+  .section-title { font-size: 15px; font-weight: 700; color: #1f2937; }
+  .section-badge { margin-left: auto; font-size: 11px; padding: 2px 10px; border-radius: 99px; font-weight: 500; }
+  .section-header.morning { background: #fffbeb; }
+  .section-header.noon { background: #f0fdf4; }
+  .section-header.evening { background: #faf5ff; }
+
+  /* Task Row */
+  .task-row { display: flex; align-items: flex-start; gap: 0; padding: 0; border-bottom: 1px solid #f9f6f2; transition: background 0.15s; }
+  .task-row:last-child { border-bottom: none; }
+  .task-row:hover { background: #fafafa; }
+  .task-row.completed { opacity: 0.55; }
+  .task-row.upcoming { background: #fffbf8; }
+
+  .task-time { width: 90px; padding: 14px 16px 14px 20px; flex-shrink: 0; }
+  .time-text { font-size: 13px; font-weight: 600; color: #374151; font-variant-numeric: tabular-nums; }
+  .time-range { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+  .task-connector { width: 20px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding-top: 18px; }
+  .connector-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #d1d5db; background: white; flex-shrink: 0; }
+  .connector-dot.done { background: #10b981; border-color: #10b981; }
+  .connector-dot.now { background: #e85d26; border-color: #e85d26; box-shadow: 0 0 0 3px rgba(232,93,38,0.2); }
+  .connector-line { width: 2px; flex: 1; background: #f3f4f6; margin-top: 4px; min-height: 20px; }
+
+  .task-body { flex: 1; padding: 12px 20px 12px 10px; }
+  .task-title { font-size: 14px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px; }
+  .task-title.strikethrough { text-decoration: line-through; color: #9ca3af; }
+  .task-desc { font-size: 12px; color: #6b7280; margin-top: 3px; line-height: 1.5; }
+  .task-badge-new { font-size: 10px; background: #fef3c7; color: #92400e; padding: 1px 8px; border-radius: 99px; font-weight: 600; }
+  .task-badge-now { font-size: 10px; background: #fee2e2; color: #b91c1c; padding: 1px 8px; border-radius: 99px; font-weight: 600; }
+
+  .task-check { width: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding-top: 13px; }
+  .check-box { width: 20px; height: 20px; border-radius: 6px; border: 2px solid #e5e7eb; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .check-box.done { background: #10b981; border-color: #10b981; color: white; }
+  .check-box.now { border-color: #e85d26; }
+
+  /* Reminder tag */
+  .reminder-tag { font-size: 10px; color: #8b5cf6; background: #f5f3ff; padding: 1px 7px; border-radius: 99px; margin-left: 4px; }
+
+  /* Notes */
+  .notes-card { background: white; border-radius: 14px; border: 1px solid #f0ede8; padding: 20px; margin-bottom: 20px; }
+  .notes-title { font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 10px; }
+  .notes-input { width: 100%; border: 1px solid #f0ede8; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #6b7280; resize: none; background: #fafaf8; outline: none; font-family: inherit; }
+
+  /* Notification toast */
+  .toast { position: fixed; top: 20px; right: 20px; background: white; border-radius: 14px; padding: 14px 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); border-left: 4px solid #e85d26; max-width: 280px; animation: slideIn 0.3s ease; }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .toast-header { font-size: 11px; color: #9ca3af; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .toast-title { font-size: 14px; font-weight: 600; color: #1f2937; }
+  .toast-desc { font-size: 12px; color: #6b7280; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🍛 咖喱小助手</h1>
+    <p>写作资源管理库</p>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item">🎯 每日灵感</div>
+    <div class="nav-item">✍️ 码字计划</div>
+    <div class="nav-item">📂 分类浏览</div>
+    <div class="nav-item">🔍 搜索文章</div>
+    <div class="nav-item">🏷️ 标签管理</div>
+    <div class="nav-item">📊 数据统计</div>
+    <div class="nav-item active">📅 每日日程</div>
+    <div class="nav-item">🎬 故事框架</div>
+  </nav>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="content">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">📅 每日日程 <span style="font-size:14px;color:#9ca3af;font-weight:400">生活Routine 1.0</span></div>
+        <div class="page-subtitle">固定事项减少决策，保护前额叶，让生活轻松有规律</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline">🔔 提醒设置</button>
+        <button class="btn btn-outline">✏️ 编辑日程</button>
+        <button class="btn btn-primary">+ 添加事项</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">今日完成</div>
+        <div class="stat-value orange">5 <span style="font-size:14px;color:#9ca3af">/ 14</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">完成率</div>
+        <div class="stat-value green">45%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">连续打卡</div>
+        <div class="stat-value blue">7 天</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">下个提醒</div>
+        <div class="stat-value" style="font-size:16px;color:#374151">11:15 <span style="font-size:11px;color:#9ca3af">午饭</span></div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <div class="progress-label">⏳ 今日进度</div>
+        <div class="progress-pct">45% · 还剩 9 项</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill"></div></div>
+      <div class="time-sections">
+        <span class="time-section-tag tag-morning">☀️ 晨间 5/7 完成</span>
+        <span class="time-section-tag tag-noon">🌿 午间 0/2 待完成</span>
+        <span class="time-section-tag tag-evening">🌙 晚间 0/5 待完成</span>
+      </div>
+    </div>
+
+    <!-- Current Task Banner -->
+    <div class="current-banner">
+      <div class="current-banner-left">
+        <div class="pulse-dot"></div>
+        <div>
+          <div class="current-label">📍 正在进行</div>
+          <div class="current-task">食堂吃饭 · 到工位泡养生茶</div>
+          <div class="current-time">8:00 开始 · 已进行 23 分钟</div>
+        </div>
+      </div>
+      <div class="next-up">
+        <div class="next-label">⏭ 下一项</div>
+        <div class="next-task">食堂吃午饭</div>
+        <div class="next-time">11:30 · 距现在 3h 7min</div>
+      </div>
+    </div>
+
+    <!-- Morning Section -->
+    <div class="timeline-section">
+      <div class="section-header morning">
+        <div class="section-icon">☀️</div>
+        <div class="section-title">晨间事项</div>
+        <div class="section-badge tag-morning">5/7 已完成</div>
+      </div>
+
+      <div class="task-row completed">
+        <div class="task-time"><div class="time-text">6:20</div><div class="time-range">~ 6:30</div></div>
+        <div class="task-connector"><div class="connector-dot done">✓</div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title strikethrough">起床 · 换衣服 · 洗漱 · 喝温水 · 拉开窗帘</div>
+        </div>
+        <div class="task-check"><div class="check-box done">✓</div></div>
+      </div>
+
+      <div class="task-row completed">
+        <div class="task-time"><div class="time-text">6:30</div><div class="time-range">~ 6:45</div></div>
+        <div class="task-connector"><div class="connector-dot done">✓</div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title strikethrough">运动拉伸</div>
+        </div>
+        <div class="task-check"><div class="check-box done">✓</div></div>
+      </div>
+
+      <div class="task-row completed">
+        <div class="task-time"><div class="time-text">6:45</div><div class="time-range">~ 7:00</div></div>
+        <div class="task-connector"><div class="connector-dot done">✓</div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title strikethrough">写晨间日记 · 手帐 · 记账</div>
+          <div class="task-desc">检查待办清单</div>
+        </div>
+        <div class="task-check"><div class="check-box done">✓</div></div>
+      </div>
+
+      <div class="task-row completed">
+        <div class="task-time"><div class="time-text">7:00</div><div class="time-range">~ 7:10</div></div>
+        <div class="task-connector"><div class="connector-dot done">✓</div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title strikethrough">护肤 · 化妆</div>
+          <div class="task-desc">水 + 防晒/隔离 · 散粉、眉毛、口红</div>
+        </div>
+        <div class="task-check"><div class="check-box done">✓</div></div>
+      </div>
+
+      <div class="task-row completed">
+        <div class="task-time"><div class="time-text">7:20</div></div>
+        <div class="task-connector"><div class="connector-dot done">✓</div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title strikethrough">出门坐公交</div>
+        </div>
+        <div class="task-check"><div class="check-box done">✓</div></div>
+      </div>
+
+      <div class="task-row upcoming">
+        <div class="task-time"><div class="time-text">8:00</div></div>
+        <div class="task-connector"><div class="connector-dot now"></div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title">食堂吃饭 · 到工位泡养生茶 <span class="task-badge-now">进行中</span></div>
+          <div class="task-desc">检查工作待办</div>
+        </div>
+        <div class="task-check"><div class="check-box now"></div></div>
+      </div>
+    </div>
+
+    <!-- Noon Section -->
+    <div class="timeline-section">
+      <div class="section-header noon">
+        <div class="section-icon">🌿</div>
+        <div class="section-title">午间事项</div>
+        <div class="section-badge tag-noon">0/2 待完成</div>
+      </div>
+
+      <div class="task-row">
+        <div class="task-time"><div class="time-text">11:30</div></div>
+        <div class="task-connector"><div class="connector-dot"></div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title">食堂吃饭 <span class="reminder-tag">🔔 提前15分钟</span></div>
+        </div>
+        <div class="task-check"><div class="check-box"></div></div>
+      </div>
+
+      <div class="task-row">
+        <div class="task-time"><div class="time-text">12:00</div></div>
+        <div class="task-connector"><div class="connector-dot"></div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title">肩颈拉伸 · 午休</div>
+          <div class="task-desc">看书 / 发呆 / 冥想思考 / 写日记</div>
+        </div>
+        <div class="task-check"><div class="check-box"></div></div>
+      </div>
+    </div>
+
+    <!-- Evening Section -->
+    <div class="timeline-section">
+      <div class="section-header evening">
+        <div class="section-icon">🌙</div>
+        <div class="section-title">晚间事项</div>
+        <div class="section-badge tag-evening">0/5 待完成</div>
+      </div>
+
+      <div class="task-row">
+        <div class="task-time"><div class="time-text">17:30</div></div>
+        <div class="task-connector"><div class="connector-dot"></div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title">下班 · 采购食材 · 取快递 <span class="reminder-tag">🔔 提前30分钟</span></div>
+          <div class="task-desc">到家带娃 / 做饭</div>
+        </div>
+        <div class="task-check"><div class="check-box"></div></div>
+      </div>
+
+      <div class="task-row">
+        <div class="task-time"><div class="time-text">饭后</div></div>
+        <div class="task-connector"><div class="connector-dot"></div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title">带娃玩 / 出门玩</div>
+          <div class="task-desc">给娃洗护（同时自己洗脸刷牙、洗衣）</div>
+        </div>
+        <div class="task-check"><div class="check-box"></div></div>
+      </div>
+
+      <div class="task-row">
+        <div class="task-time"><div class="time-text">22:00</div></div>
+        <div class="task-connector"><div class="connector-dot"></div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title">护肤 <span class="reminder-tag">🔔 提前10分钟</span></div>
+          <div class="task-desc">面膜、水、精华、乳</div>
+        </div>
+        <div class="task-check"><div class="check-box"></div></div>
+      </div>
+
+      <div class="task-row">
+        <div class="task-time"><div class="time-text">22:00</div></div>
+        <div class="task-connector"><div class="connector-dot"></div><div class="connector-line"></div></div>
+        <div class="task-body">
+          <div class="task-title">整理 · 准备次日物品</div>
+          <div class="task-desc">衣服、包包物品、检查todo清单</div>
+        </div>
+        <div class="task-check"><div class="check-box"></div></div>
+      </div>
+
+      <div class="task-row">
+        <div class="task-time"><div class="time-text">睡前</div></div>
+        <div class="task-connector"><div class="connector-dot"></div></div>
+        <div class="task-body">
+          <div class="task-title">练一页字</div>
+          <div class="task-desc">睡前不看手机，利于睡眠</div>
+        </div>
+        <div class="task-check"><div class="check-box"></div></div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="notes-card">
+      <div class="notes-title">💡 优化提升记录</div>
+      <textarea class="notes-input" rows="3" placeholder="记录执行过程中的优化提升事项…（这里记录执行过程中的优化提升事项）"></textarea>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast Notification (样式示意) -->
+<div class="toast">
+  <div class="toast-header">🔔 即将开始提醒</div>
+  <div class="toast-title">食堂吃午饭</div>
+  <div class="toast-desc">还有 15 分钟 · 11:30 开始</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>点子生成细纲 - 效果图</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111827; color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; min-height: 100vh; }
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar { width: 200px; background: #1f2937; border-right: 1px solid #374151; padding: 16px 0; flex-shrink: 0; }
+  .sidebar-logo { padding: 12px 16px 20px; font-size: 18px; font-weight: 700; }
+  .sidebar-item { display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #9ca3af; font-size: 14px; cursor: pointer; }
+  .sidebar-item.active { background: #374151; color: #60a5fa; }
+  .main { flex: 1; padding: 24px; overflow-y: auto; }
+
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
+
+  /* Tab 切换 */
+  .tabs { display: flex; gap: 1px; background: #374151; border-radius: 10px; padding: 1px; width: fit-content; margin-bottom: 24px; }
+  .tab { padding: 8px 20px; border-radius: 9px; font-size: 14px; font-weight: 500; cursor: pointer; color: #9ca3af; }
+  .tab.active { background: #1f2937; color: #f9fafb; }
+
+  /* 输入区 */
+  .input-card { background: #1f2937; border: 1px solid #374151; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+  .input-label { font-size: 13px; color: #9ca3af; margin-bottom: 8px; font-weight: 500; }
+  .idea-input { width: 100%; background: #111827; border: 1px solid #374151; border-radius: 10px; padding: 14px; color: #f9fafb; font-size: 15px; line-height: 1.6; resize: none; outline: none; font-family: inherit; }
+  .idea-input:focus { border-color: #60a5fa; }
+  .idea-input::placeholder { color: #4b5563; }
+  .options-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .select-input { background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 7px 12px; color: #9ca3af; font-size: 13px; outline: none; cursor: pointer; }
+  .generate-btn { padding: 10px 28px; background: #60a5fa; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 14px; display: flex; align-items: center; gap: 8px; }
+  .generate-btn:hover { background: #3b82f6; }
+  .hint { font-size: 12px; color: #4b5563; margin-top: 10px; line-height: 1.6; }
+
+  /* 输出区：表格样式 */
+  .result-card { background: #1f2937; border: 1px solid #374151; border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+  .result-header { background: #374151; padding: 10px 16px; font-size: 13px; font-weight: 600; color: #e5e7eb; display: flex; align-items: center; gap: 8px; }
+
+  .table-section { border-bottom: 1px solid #374151; }
+  .table-section:last-child { border-bottom: none; }
+  .table-row { display: grid; }
+  .table-row.two { grid-template-columns: 80px 1fr; }
+  .table-row.four { grid-template-columns: 80px 1fr 1fr 1fr; }
+  .cell { padding: 12px 14px; border-right: 1px solid #2d3748; font-size: 13px; line-height: 1.7; }
+  .cell:last-child { border-right: none; }
+  .cell.label { color: #9ca3af; font-weight: 600; font-size: 12px; background: #1a2332; flex-shrink: 0; }
+  .cell.value { color: #e5e7eb; }
+  .cell.highlight { color: #fbbf24; font-weight: 500; }
+
+  /* 细纲特殊样式 */
+  .outline-grid { display: grid; grid-template-columns: 80px repeat(3, 1fr); }
+  .outline-col { border-right: 1px solid #2d3748; }
+  .outline-col:last-child { border-right: none; }
+  .outline-col-header { padding: 8px 12px; background: #1a2332; text-align: center; border-bottom: 1px solid #2d3748; }
+  .outline-col-header .seg { font-size: 11px; color: #60a5fa; font-weight: 600; }
+  .outline-row { border-bottom: 1px solid #2d3748; }
+  .outline-row:last-child { border-bottom: none; }
+  .outline-row-label { padding: 6px 10px; background: #1a2332; font-size: 11px; color: #9ca3af; font-weight: 600; }
+  .outline-row-content { padding: 10px 12px; font-size: 12px; color: #d1d5db; line-height: 1.7; }
+  .outline-row-content.turning { color: #f87171; }
+  .outline-row-content.emotion { color: #34d399; }
+
+  /* 情绪折线 */
+  .emotion-grid { display: grid; grid-template-columns: 80px 1fr 1fr; }
+  .up-tag { display: inline-block; background: rgba(52,211,153,0.15); color: #34d399; border-radius: 4px; padding: 1px 6px; font-size: 11px; margin-bottom: 4px; }
+  .down-tag { display: inline-block; background: rgba(248,113,113,0.15); color: #f87171; border-radius: 4px; padding: 1px 6px; font-size: 11px; margin-bottom: 4px; }
+
+  /* 生成中状态 */
+  .generating { display: flex; align-items: center; gap: 10px; padding: 30px; color: #9ca3af; font-size: 14px; }
+  .dot { width: 8px; height: 8px; background: #60a5fa; border-radius: 50%; animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.5} 40%{transform:scale(1.2);opacity:1} }
+
+  .copy-btn { margin-left: auto; font-size: 12px; color: #6b7280; border: 1px solid #374151; background: transparent; padding: 3px 10px; border-radius: 6px; cursor: pointer; }
+  .copy-btn:hover { color: #9ca3af; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: rgba(96,165,250,0.15); color: #60a5fa; margin-right: 4px; }
+  .badge.red { background: rgba(248,113,113,0.15); color: #f87171; }
+  .badge.yellow { background: rgba(251,191,36,0.15); color: #fbbf24; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-logo">🍛 咖喱小助手</div>
+    <div class="sidebar-item">🎯 每日灵感</div>
+    <div class="sidebar-item">✍️ 码字计划</div>
+    <div class="sidebar-item">📱 自媒体管理</div>
+    <div class="sidebar-item active">🎬 故事框架</div>
+    <div class="sidebar-item">📂 分类浏览</div>
+  </div>
+
+  <div class="main">
+    <h1>🎬 故事框架</h1>
+    <p class="subtitle">从一个点子，生成完整的情绪结构细纲</p>
+
+    <!-- Tab -->
+    <div class="tabs">
+      <div class="tab">📋 故事框架生成</div>
+      <div class="tab active">💡 点子 → 细纲</div>
+    </div>
+
+    <!-- 输入区 -->
+    <div class="input-card">
+      <div class="input-label">💬 说说你的点子（越随意越好，一句话也行）</div>
+      <textarea class="idea-input" rows="4" placeholder="比如：
+· 刷抖音看到一个被家暴还不离婚的女的，但其实她在下一盘大棋
+· 一个对所有人都温柔的男主，唯独对女主冷漠，但女主不知道这是爱
+· 老公出轨了，但女主发现他的出轨对象其实是在保护她">在刷抖音的时候，看到有一个上门女婿，被整个家族欺负，但最后他一夜翻身，把所有人都踩在脚下。这个故事很爽，想写一个类似的但是换成女主的版本，有一个很狗血的情感线加进去。</textarea>
+
+      <div class="options-row">
+        <select class="select-input">
+          <option>女主视角</option>
+          <option>男主视角</option>
+          <option>双视角</option>
+        </select>
+        <select class="select-input">
+          <option>虐心向（先虐后甜）</option>
+          <option>爽文向（直接爽）</option>
+          <option>甜宠向</option>
+          <option>悬疑向</option>
+          <option>追妻火葬场</option>
+        </select>
+        <select class="select-input">
+          <option>现代都市</option>
+          <option>古代宫廷</option>
+          <option>玄幻修炼</option>
+          <option>职场商战</option>
+        </select>
+      </div>
+
+      <button class="generate-btn">
+        <span>✨</span> 生成细纲
+      </button>
+
+      <p class="hint">💡 三个关键点会贯穿全文：<strong style="color:#fbbf24">情绪</strong>（让读者有感觉）· <strong style="color:#60a5fa">节奏</strong>（爽点密度合理）· <strong style="color:#34d399">创新</strong>（避免俗套设定）</p>
+    </div>
+
+    <!-- 输出区（AI生成结果示例） -->
+    <div class="result-card">
+      <div class="result-header">
+        📄 情绪结构思路拆解 · 一级结构构思思路表
+        <button class="copy-btn">复制全文</button>
+      </div>
+
+      <!-- 一句话梗概 -->
+      <div class="table-section">
+        <div class="table-row two">
+          <div class="cell label">一句话梗概</div>
+          <div class="cell highlight">
+            上门女婿身份的女主被夫家全族轻视欺压，暗中积累资源逆袭翻身，同时借助渣夫出轨这张牌彻底踩碎所有人，并在绝地中收获一段意想不到的真情。
+          </div>
+        </div>
+      </div>
+
+      <!-- 结构：起承转合 -->
+      <div class="table-section">
+        <div class="table-row four" style="background:#1a2332;">
+          <div class="cell label">结构</div>
+          <div class="cell label" style="text-align:center;">起</div>
+          <div class="cell label" style="text-align:center;">承</div>
+          <div class="cell label" style="text-align:center;">转</div>
+          <div style="display:grid;grid-template-columns:1fr 40px;border-right:none;">
+            <div class="cell label" style="text-align:center;">合</div>
+          </div>
+        </div>
+        <div class="table-row four">
+          <div class="cell label" style="color:#6b7280;font-size:11px;">事件</div>
+          <div class="cell value">女主嫁入豪门却以上门身份被全族看低，老公明里护着她，暗地里养着小三</div>
+          <div class="cell value">女主发现真相后没有闹，开始暗中布局——用老公的资源做自己的生意，同时反将小三一军</div>
+          <div class="cell value">女主事业起飞，夫家开始巴结；老公意识到失去她，开始卑微挽回；小三彻底出局</div>
+          <div class="cell value">女主当众摊牌，夫家颜面尽失；老公跪地求和被拒；女主带着新事业和新感情离场</div>
+        </div>
+        <div class="table-row four" style="background:#1a2332;">
+          <div class="cell label">事件流程</div>
+          <div class="cell label" style="text-align:center;font-size:11px;">欲望</div>
+          <div class="cell label" style="text-align:center;font-size:11px;">阻碍</div>
+          <div class="cell label" style="text-align:center;font-size:11px;">行动</div>
+          <div class="cell label" style="text-align:center;font-size:11px;">达成</div>
+        </div>
+        <div class="table-row four">
+          <div class="cell label" style="color:transparent;">-</div>
+          <div class="cell value" style="font-size:12px;">女主要在夫家站稳脚跟，顺便把亏欠的都要回来</div>
+          <div class="cell value" style="font-size:12px;">①夫家集体排斥<br>②老公出轨小三仗势欺人<br>③没有娘家撑腰</div>
+          <div class="cell value" style="font-size:12px;">①借老公资源悄悄创业<br>②把小三设计成棋子<br>③结交新贵人</div>
+          <div class="cell value" style="font-size:12px;">事业成、情债清、夫家跪、自己赢</div>
+        </div>
+      </div>
+
+      <!-- 爽点元素 -->
+      <div class="table-section">
+        <div class="table-row two" style="background:#1a2332;">
+          <div class="cell label">爽点元素</div>
+          <div class="cell label" style="font-size:11px;">人物 & 情绪点</div>
+        </div>
+        <div class="table-row two">
+          <div class="cell label" style="font-size:11px;">主角势力</div>
+          <div class="cell value" style="font-size:13px;">
+            <span class="badge">女主林锦</span>
+            <span class="badge">闺蜜苏彤（军师型）</span>
+            <span class="badge">贵人顾廷深（新感情线）</span>
+          </div>
+        </div>
+        <div class="table-row two">
+          <div class="cell label" style="font-size:11px;">反派势力</div>
+          <div class="cell value" style="font-size:13px;">
+            <span class="badge red">渣夫沈承恩</span>
+            <span class="badge red">小三黎晚（夫家暗中支持）</span>
+            <span class="badge red">婆婆 + 大伯</span>
+          </div>
+        </div>
+        <div class="table-row two">
+          <div class="cell label" style="font-size:11px;">情绪点要素</div>
+          <div class="cell value" style="font-size:13px; color: #fbbf24;">
+            1. 上门女婿设定反转 → 女性视角自带新鲜感<br>
+            2. 婆家集体欺凌 + 渣夫装情圣 → 先虐到极致<br>
+            3. 女主清醒不哭不闹反手布局 → 爽感来源<br>
+            4. 小三仗势欺人却被女主一步一步踩死 → 最爽情节<br>
+            5. 渣夫发现真相后悔莫及，卑微求和被拒 → 情感高潮
+          </div>
+        </div>
+      </div>
+
+      <!-- 细纲 -->
+      <div class="table-section">
+        <div style="padding:10px 14px 6px; background:#1a2332; font-size:12px; font-weight:600; color:#9ca3af;">细纲（铺垫 → 转折点 → 情绪点 × 3段）</div>
+        <div class="outline-grid">
+          <div class="outline-col">
+            <div class="outline-col-header"><div class="seg" style="color:#6b7280;">—</div></div>
+            <div class="outline-row">
+              <div class="outline-row-label">铺垫</div>
+            </div>
+            <div class="outline-row">
+              <div class="outline-row-label">转折点</div>
+            </div>
+            <div class="outline-row">
+              <div class="outline-row-label">情绪点</div>
+            </div>
+          </div>
+
+          <div class="outline-col">
+            <div class="outline-col-header"><div class="seg">第一段 · 虐</div></div>
+            <div class="outline-row">
+              <div class="outline-row-content">
+                ①婆家对女主的日常轻视（住偏房、不上席、受指使）<br>
+                ②老公表面护着她，背地里和小三接吻被她撞见<br>
+                ③小三上门羞辱，婆婆装没看见
+              </div>
+            </div>
+            <div class="outline-row">
+              <div class="outline-row-content turning">女主在卫生间独自哭完，出来后表情平静，开始在手机里记账：「他们欠我的，我会一笔一笔要回来」</div>
+            </div>
+            <div class="outline-row">
+              <div class="outline-row-content emotion">① 读者跟着女主受委屈 → 情绪憋到顶点<br>→ 转折点一出立刻解压：她没有崩溃，她在记仇</div>
+            </div>
+          </div>
+
+          <div class="outline-col">
+            <div class="outline-col-header"><div class="seg">第二段 · 布局</div></div>
+            <div class="outline-row">
+              <div class="outline-row-content">
+                ③借老公公司资源注册了自己名下的公司<br>
+                ④用小三的嚣张反将一军（设计让小三在客户面前出丑）<br>
+                ⑤渣夫发现女主在搞事业，半嘲半哄，女主笑着配合
+              </div>
+            </div>
+            <div class="outline-row">
+              <div class="outline-row-content turning">女主的公司拿下第一个大单，合作方正是老公最想拿到的客户——她用老公的人脉截了他的胡</div>
+            </div>
+            <div class="outline-row">
+              <div class="outline-row-content emotion">② 读者看到女主在悄悄变强 → 爽感开始积累<br>→ 渣夫还浑然不觉，反差感极强</div>
+            </div>
+          </div>
+
+          <div class="outline-col">
+            <div class="outline-col-header"><div class="seg">第三段 · 反杀</div></div>
+            <div class="outline-row">
+              <div class="outline-row-content">
+                ⑦婆家开始对女主改变态度（她有钱了）<br>
+                ⑧渣夫发现自己爱上了现在的她，开始卑微示好<br>
+                ⑨小三最后一次闹事，被女主当众击穿
+              </div>
+            </div>
+            <div class="outline-row">
+              <div class="outline-row-content turning">女主在家族宴会上当众宣布离婚，同时公开了渣夫出轨证据和婆家欺凌记录，顺带宣布新公司上市</div>
+            </div>
+            <div class="outline-row">
+              <div class="outline-row-content emotion">③ 读者情绪全面爆发 → 前两段的委屈在这一刻全部还清<br>→ 渣夫跪地、婆家哑口、小三社死，女主头也不回离场</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 情绪折线 -->
+      <div class="table-section">
+        <div class="emotion-grid">
+          <div class="cell label">情绪折线</div>
+          <div class="cell value">
+            <div class="up-tag">↑ 上行情绪</div>
+            <div style="font-size:12px;color:#d1d5db;line-height:1.8;">
+              1. 女主清醒决定布局，读者跟着她一起「记仇」<br>
+              2. 每次小三嚣张后都有对应的反将，节奏干净利落<br>
+              3. 公司起飞，渣夫变卑微，婆家来巴结<br>
+              4. 宴会摊牌一气呵成，最终离场极度解气
+            </div>
+          </div>
+          <div class="cell value">
+            <div class="down-tag">↓ 下行情绪</div>
+            <div style="font-size:12px;color:#d1d5db;line-height:1.8;">
+              1. 上门女婿的屈辱处境，婆家的集体轻视<br>
+              2. 渣夫出轨还装深情，双重背叛感<br>
+              3. 小三每次上门都踩一脚，读者代入感强烈<br>
+              <span style="color:#fbbf24;">→ 下行越狠，后续反杀越爽</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button style="padding:9px 20px;background:#374151;color:#e5e7eb;border:none;border-radius:9px;font-size:13px;cursor:pointer;">🔄 重新生成</button>
+      <button style="padding:9px 20px;background:#374151;color:#e5e7eb;border:none;border-radius:9px;font-size:13px;cursor:pointer;">📋 复制细纲部分</button>
+      <button style="padding:9px 20px;background:#60a5fa;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;">➡️ 用这个框架继续生成故事框架</button>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

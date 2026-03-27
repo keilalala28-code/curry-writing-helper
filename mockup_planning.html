@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人规划 — 效果图 v2</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif; background: #f9fafb; color: #111; }
+
+/* Shell */
+.shell { display: flex; min-height: 100vh; }
+.sidebar { width: 208px; background: #fff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-brand { padding: 16px; border-bottom: 1px solid #f3f4f6; }
+.sidebar-brand h1 { font-size: 18px; font-weight: 700; color: #e85d5d; }
+.sidebar-brand p { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.sidebar-nav { flex: 1; padding: 8px; }
+.nav-item { display: block; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #6b7280; margin-bottom: 2px; }
+.nav-item.active { background: #fff1f1; color: #e85d5d; }
+
+/* Content */
+.content { flex: 1; padding: 24px; overflow: auto; }
+
+/* Page title row */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 12px; }
+.page-title-block h1 { font-size: 22px; font-weight: 700; color: #111; display: flex; align-items: center; gap: 8px; }
+.page-title-block p { font-size: 12px; color: #9ca3af; margin-top: 3px; }
+.header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* Main tabs */
+.tabs { display: flex; gap: 4px; background: #f3f4f6; border-radius: 10px; padding: 4px; }
+.tab { padding: 6px 18px; border-radius: 7px; font-size: 13px; font-weight: 500; color: #6b7280; cursor: pointer; border: none; background: none; transition: all .15s; white-space: nowrap; }
+.tab.active { background: #fff; color: #e85d5d; box-shadow: 0 1px 3px rgba(0,0,0,.1); font-weight: 600; }
+
+/* Sub toggle (today/calendar) */
+.sub-toggle { display: flex; background: #f3f4f6; border-radius: 8px; padding: 3px; }
+.sub-btn { padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; color: #6b7280; border: none; background: none; cursor: pointer; }
+.sub-btn.active { background: #fff; color: #111; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+
+/* Preset button */
+.preset-btn { padding: 6px 14px; border-radius: 9px; font-size: 12px; font-weight: 500; background: #fff; border: 1px solid #e5e7eb; color: #6b7280; cursor: pointer; white-space: nowrap; }
+.preset-btn:hover { border-color: #fca5a5; color: #e85d5d; }
+
+/* Cards */
+.card { background: #fff; border-radius: 16px; border: 1px solid #f3f4f6; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+.stat-card { padding: 14px 16px; background: #fff; border-radius: 16px; border: 1px solid #f3f4f6; }
+.stat-card .lbl { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+.stat-card .val { font-size: 20px; font-weight: 700; }
+.orange { color: #f97316; }
+.green { color: #16a34a; }
+.blue { color: #3b82f6; }
+.gray7 { color: #374151; }
+
+/* Progress card */
+.progress-card { padding: 16px; margin-bottom: 12px; }
+.progress-card .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #374151; }
+.progress-card .label-row span:last-child { color: #f97316; font-size: 13px; }
+.bar-bg { height: 8px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+.bar-fill { height: 8px; border-radius: 99px; background: linear-gradient(90deg, #f97316, #fb923c); }
+.badge-row { display: flex; gap: 8px; margin-top: 10px; }
+.badge { padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+.badge-am { background: #fffbeb; color: #b45309; }
+.badge-pm { background: #f0fdf4; color: #166534; }
+.badge-eve { background: #fdf4ff; color: #6b21a8; }
+
+/* Current banner */
+.banner { background: linear-gradient(135deg, #f97316, #f59e0b); border-radius: 16px; padding: 14px 18px; color: #fff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.banner .dot { width: 10px; height: 10px; background: #fff; border-radius: 50%; opacity: .85; margin-right: 10px; flex-shrink: 0; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100% { opacity: .85; } 50% { opacity: .4; } }
+.banner .main { flex: 1; }
+.banner .sub-lbl { font-size: 11px; opacity: .75; }
+.banner .title { font-size: 15px; font-weight: 700; margin: 1px 0; }
+.banner .time { font-size: 11px; opacity: .7; }
+.banner .next { text-align: right; }
+.banner .next .sub-lbl { font-size: 10px; }
+.banner .next .nt { font-size: 13px; font-weight: 600; }
+
+/* Section block */
+.section-block { margin-bottom: 12px; }
+.section-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #f3f4f6; font-weight: 700; font-size: 13px; color: #374151; }
+.section-header.am { background: #fffbeb; }
+.section-header.pm { background: #f0fdf4; }
+.section-header.eve { background: #fdf4ff; }
+.section-count { margin-left: auto; font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+.cnt-am { background: #fef3c7; color: #92400e; }
+.cnt-pm { background: #dcfce7; color: #166534; }
+.cnt-eve { background: #f3e8ff; color: #6b21a8; }
+
+.task-row { display: flex; align-items: flex-start; padding: 10px 16px; border-bottom: 1px solid #f9fafb; gap: 4px; }
+.task-row:last-child { border-bottom: none; }
+.task-time-col { width: 80px; flex-shrink: 0; }
+.task-time-col .t { font-size: 13px; font-weight: 600; color: #374151; }
+.task-time-col .t2 { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.dot-col { width: 20px; display: flex; flex-direction: column; align-items: center; padding-top: 4px; flex-shrink: 0; }
+.dot-col .d { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #d1d5db; flex-shrink: 0; }
+.dot-col .d.done { background: #22c55e; border-color: #22c55e; }
+.dot-col .d.current { background: #f97316; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,.2); }
+.dot-col .line { width: 2px; flex: 1; background: #f3f4f6; min-height: 14px; margin-top: 3px; }
+.task-body { flex: 1; padding: 0 8px; }
+.task-name { font-size: 13px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 6px; }
+.task-name.done { text-decoration: line-through; color: #9ca3af; }
+.task-desc { font-size: 11px; color: #9ca3af; margin-top: 3px; }
+.badge-active { font-size: 10px; background: #fee2e2; color: #dc2626; padding: 2px 7px; border-radius: 99px; font-weight: 600; }
+.badge-remind { font-size: 10px; background: #f3e8ff; color: #7c3aed; padding: 2px 7px; border-radius: 99px; }
+.check-col { width: 44px; display: flex; justify-content: center; padding-top: 2px; flex-shrink: 0; }
+.chk { width: 22px; height: 22px; border-radius: 7px; border: 2px solid #d1d5db; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+.chk.done { background: #22c55e; border-color: #22c55e; color: #fff; }
+.chk.current { border-color: #f97316; }
+
+/* Notes */
+.notes-card { padding: 16px; margin-bottom: 12px; }
+.notes-card .lbl { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+.notes-area { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #374151; resize: none; height: 72px; background: #f9fafb; line-height: 1.6; font-family: inherit; }
+
+/* ── Calendar view ── */
+.calendar-grid { display: grid; grid-template-columns: 1fr 260px; gap: 12px; align-items: start; }
+.cal-card { overflow: hidden; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #f3f4f6; }
+.cal-month { font-size: 16px; font-weight: 700; color: #111; }
+.cal-avg { font-size: 12px; color: #6b7280; }
+.cal-avg span { font-weight: 700; color: #f97316; }
+.nav-btns { display: flex; gap: 4px; }
+.nav-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; font-size: 14px; color: #6b7280; display: flex; align-items: center; justify-content: center; }
+.week-row { display: grid; grid-template-columns: repeat(7, 1fr); padding: 6px 10px 2px; }
+.week-hdr { text-align: center; font-size: 11px; font-weight: 600; color: #9ca3af; padding: 4px 0; }
+.week-hdr.sun { color: #ef4444; }
+.week-hdr.sat { color: #3b82f6; }
+.day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; padding: 4px 10px 10px; }
+.day-cell { aspect-ratio: 1; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all .1s; }
+.day-cell .dn { font-size: 13px; font-weight: 700; }
+.day-cell .dp { font-size: 9px; font-weight: 700; }
+.dc-empty { opacity: .2; }
+.dc-future { background: #f9fafb; }
+.dc-today { background: #f97316; box-shadow: 0 2px 8px rgba(249,115,22,.35); }
+.dc-today .dn { color: #fff; }
+.dc-today .dp { color: rgba(255,255,255,.8); }
+.dc-good { background: #dcfce7; }
+.dc-good .dn { color: #166534; }
+.dc-good .dp { color: #16a34a; }
+.dc-mid { background: #fef9c3; }
+.dc-mid .dn { color: #713f12; }
+.dc-mid .dp { color: #ca8a04; }
+.dc-bad { background: #fee2e2; }
+.dc-bad .dn { color: #7f1d1d; }
+.dc-bad .dp { color: #dc2626; }
+.dc-none { background: #f3f4f6; }
+.dc-none .dn { color: #9ca3af; }
+.dc-selected { outline: 2px solid #f97316; outline-offset: 1px; }
+.cal-legend { display: flex; gap: 12px; padding: 10px 18px; border-top: 1px solid #f3f4f6; flex-wrap: wrap; }
+.leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6b7280; }
+.leg-dot { width: 11px; height: 11px; border-radius: 3px; }
+
+/* Right panel */
+.right-panel { display: flex; flex-direction: column; gap: 10px; }
+.month-stats-card { padding: 14px 16px; }
+.month-stats-card .ttl { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #f9fafb; }
+.stat-row:last-child { border: none; }
+.stat-row .k { font-size: 12px; color: #6b7280; }
+.stat-row .v { font-size: 13px; font-weight: 700; }
+.day-detail-card { padding: 14px 16px; }
+.day-detail-card .ttl { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; }
+.detail-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f9fafb; }
+.detail-row:last-child { border: none; }
+.detail-chk { width: 16px; height: 16px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.detail-chk.done { background: #22c55e; color: #fff; }
+.detail-chk.no { background: #f3f4f6; color: #9ca3af; }
+.detail-title { font-size: 12px; flex: 1; color: #374151; }
+.detail-title.done { text-decoration: line-through; color: #9ca3af; }
+.detail-time { font-size: 11px; color: #9ca3af; }
+
+/* ── 月计划 ── */
+.month-plan-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.month-nav-row { display: flex; align-items: center; gap: 6px; }
+.month-label { font-size: 16px; font-weight: 700; min-width: 80px; text-align: center; }
+.stats4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.stats4 .sc { background: #fff; border-radius: 14px; border: 1px solid #f3f4f6; padding: 12px 14px; }
+.stats4 .sc .n { font-size: 22px; font-weight: 700; }
+.stats4 .sc .l { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.goal-list-header { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+.add-btn { font-size: 12px; color: #e85d5d; background: none; border: none; cursor: pointer; font-weight: 600; padding: 4px 10px; border-radius: 7px; }
+.add-btn:hover { background: #fff1f1; }
+.goal-item { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: #fff; border-radius: 12px; margin-bottom: 7px; border: 1px solid #f3f4f6; }
+.goal-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.goal-title { flex: 1; font-size: 13px; font-weight: 500; color: #374151; }
+.goal-tag { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500; white-space: nowrap; }
+.tag-w { background: #eff6ff; color: #2563eb; }
+.tag-h { background: #f0fdf4; color: #16a34a; }
+.tag-l { background: #fdf4ff; color: #9333ea; }
+.tag-f { background: #fefce8; color: #ca8a04; }
+.tag-s { background: #fff7ed; color: #ea580c; }
+.goal-status { font-size: 11px; padding: 2px 9px; border-radius: 99px; font-weight: 600; white-space: nowrap; }
+.gs-todo { background: #f3f4f6; color: #6b7280; }
+.gs-doing { background: #fff7ed; color: #ea580c; }
+.gs-done { background: #f0fdf4; color: #16a34a; }
+.month-notes-sec { margin-top: 16px; }
+.mn-lbl { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 8px; }
+
+/* ── 年计划 ── */
+.year3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.year3 .yc { background: #fff; border-radius: 14px; border: 1px solid #f3f4f6; padding: 14px 16px; }
+.year3 .yc .yn { font-size: 22px; font-weight: 700; }
+.year3 .yc .yl { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.qtabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.qt { padding: 5px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; color: #6b7280; background: #f3f4f6; border: none; cursor: pointer; }
+.qt.active { background: #e85d5d; color: #fff; }
+.annual-goal { background: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid #f3f4f6; }
+.ag-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ag-title { flex: 1; font-size: 13px; font-weight: 600; color: #374151; }
+.ag-pct { font-size: 12px; font-weight: 700; color: #e85d5d; white-space: nowrap; }
+.ag-bar { height: 6px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+.ag-fill { height: 6px; border-radius: 99px; }
+.ag-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.ag-desc { font-size: 11px; color: #9ca3af; flex: 1; }
+.qbadge { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500; white-space: nowrap; }
+.q-all { background: #eff6ff; color: #2563eb; }
+.q1 { background: #fff7ed; color: #c2410c; }
+.q2 { background: #f0fdf4; color: #166534; }
+.q3 { background: #fdf4ff; color: #7e22ce; }
+.q4 { background: #fefce8; color: #854d0e; }
+.heatmap-sec { margin-top: 20px; padding-top: 20px; border-top: 1px solid #f3f4f6; }
+.hm-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; }
+.hm-months { display: flex; gap: 4px; margin-bottom: 4px; }
+.hm-m { font-size: 10px; color: #9ca3af; text-align: center; flex: 1; }
+.hm-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; }
+.hm-cell { aspect-ratio: 1; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+.hm0 { background: #f3f4f6; color: #9ca3af; }
+.hm1 { background: #fecaca; color: #ef4444; }
+.hm2 { background: #fca5a5; color: #dc2626; }
+.hm3 { background: #f87171; color: #fff; }
+.hm4 { background: #e85d5d; color: #fff; }
+.hm-legend { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11px; color: #9ca3af; }
+.hml-dot { width: 10px; height: 10px; border-radius: 3px; }
+.yr-notes { margin-top: 20px; }
+
+/* ── Preset Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding-top: 60px; }
+.modal-box { background: #fff; border-radius: 20px; width: 100%; max-width: 580px; box-shadow: 0 20px 60px rgba(0,0,0,.2); max-height: 80vh; display: flex; flex-direction: column; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid #f3f4f6; }
+.modal-header h3 { font-size: 15px; font-weight: 700; color: #111; }
+.modal-close { font-size: 20px; color: #9ca3af; background: none; border: none; cursor: pointer; line-height: 1; }
+.modal-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.preset-add-btn { width: 100%; border: 2px dashed #e5e7eb; border-radius: 12px; padding: 12px; font-size: 13px; color: #9ca3af; background: none; cursor: pointer; margin-bottom: 10px; }
+.preset-add-btn:hover { border-color: #fca5a5; color: #e85d5d; }
+.preset-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f9fafb; border-radius: 12px; margin-bottom: 7px; }
+.pi-info { flex: 1; min-width: 0; }
+.pi-top { display: flex; align-items: center; gap: 8px; }
+.pi-time { font-size: 12px; font-family: monospace; color: #6b7280; flex-shrink: 0; }
+.pi-title { font-size: 13px; font-weight: 600; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pi-remind { font-size: 11px; color: #8b5cf6; flex-shrink: 0; }
+.pi-desc { font-size: 11px; color: #9ca3af; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pi-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.pi-edit { font-size: 12px; color: #9ca3af; padding: 4px 10px; border-radius: 7px; border: none; background: none; cursor: pointer; }
+.pi-edit:hover { background: #fff7ed; color: #f97316; }
+.pi-del { font-size: 12px; color: #9ca3af; padding: 4px 10px; border-radius: 7px; border: none; background: none; cursor: pointer; }
+.pi-del:hover { background: #fee2e2; color: #dc2626; }
+
+/* Edit form */
+.edit-form { display: flex; flex-direction: column; gap: 12px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-group label { font-size: 11px; color: #6b7280; display: block; margin-bottom: 4px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; border: 1px solid #e5e7eb; border-radius: 9px; padding: 8px 11px;
+  font-size: 13px; font-family: inherit; background: #fff; color: #374151;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: #f97316;
+}
+.form-actions { display: flex; gap: 8px; margin-top: 4px; }
+.btn-cancel { flex: 1; border: 1px solid #e5e7eb; color: #6b7280; border-radius: 10px; padding: 9px; font-size: 13px; background: #fff; cursor: pointer; }
+.btn-save { flex: 1; background: #f97316; color: #fff; border: none; border-radius: 10px; padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+/* Tip */
+.tip { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #92400e; line-height: 1.6; margin-bottom: 14px; }
+
+/* ─ State buttons for demo ─ */
+.demo-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e5e7eb; padding: 8px 16px; display: flex; gap: 8px; align-items: center; font-size: 12px; color: #6b7280; z-index: 200; }
+.demo-bar span { font-weight: 600; margin-right: 4px; }
+.db-btn { padding: 5px 12px; border-radius: 7px; border: 1px solid #e5e7eb; background: #fff; font-size: 12px; cursor: pointer; color: #374151; }
+.db-btn.on { background: #e85d5d; color: #fff; border-color: #e85d5d; }
+.db-divider { width: 1px; height: 20px; background: #e5e7eb; margin: 0 4px; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <h1>🍛 咖喱小助手</h1>
+      <p>写作资源管理库</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item">🎯 每日灵感</div>
+      <div class="nav-item">✍️ 码字计划</div>
+      <div class="nav-item active">📅 个人规划</div>
+      <div class="nav-item">📱 自媒体管理</div>
+      <div class="nav-item">📂 分类浏览</div>
+      <div class="nav-item">🔍 搜索文章</div>
+      <div class="nav-item">🏷️ 标签管理</div>
+      <div class="nav-item">📊 数据统计</div>
+      <div class="nav-item">🎬 故事框架</div>
+      <div class="nav-item">💡 生成细纲</div>
+      <div class="nav-item">💪 健康管理</div>
+    </nav>
+  </div>
+
+  <!-- Main content -->
+  <div class="content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="page-title-block">
+        <h1>📅 个人规划</h1>
+        <p id="sub-caption">生活 SOP · 固定事项减少决策，让生活轻松有规律</p>
+      </div>
+      <!-- Header right: main tabs always visible -->
+      <div class="header-actions">
+        <div class="tabs">
+          <button class="tab active" id="tab-day-btn" onclick="switchMain('day')">日计划</button>
+          <button class="tab" id="tab-month-btn" onclick="switchMain('month')">月计划</button>
+          <button class="tab" id="tab-year-btn" onclick="switchMain('year')">年计划</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 日计划 ====== -->
+    <div id="panel-day">
+      <!-- Sub controls: today/calendar toggle + preset button -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <div class="sub-toggle">
+          <button class="sub-btn active" id="sub-today-btn" onclick="switchDay('today')">今日</button>
+          <button class="sub-btn" id="sub-cal-btn" onclick="switchDay('calendar')">月历</button>
+        </div>
+        <button class="preset-btn" onclick="openModal('list')">✏️ 编辑预设</button>
+      </div>
+
+      <!-- TODAY VIEW -->
+      <div id="day-today">
+        <!-- 4 stat cards -->
+        <div class="grid4">
+          <div class="stat-card"><div class="lbl">今日完成</div><div class="val orange">6/10</div></div>
+          <div class="stat-card"><div class="lbl">完成率</div><div class="val" style="color:#eab308">60%</div></div>
+          <div class="stat-card"><div class="lbl">日期</div><div class="val gray7" style="font-size:16px">03/24</div></div>
+          <div class="stat-card"><div class="lbl">下个提醒</div><div class="val blue" style="font-size:16px">16:00</div></div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="card progress-card" style="margin-bottom:12px">
+          <div class="label-row"><span>⏳ 今日进度</span><span>60% · 还剩 4 项</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:60%"></div></div>
+          <div class="badge-row">
+            <span class="badge badge-am">☀️ 晨间 3/3</span>
+            <span class="badge badge-pm">🌿 午间 2/4</span>
+            <span class="badge badge-eve">🌙 晚间 1/3</span>
+          </div>
+        </div>
+
+        <!-- Current banner -->
+        <div class="banner" style="margin-bottom:12px">
+          <div class="dot"></div>
+          <div class="main">
+            <div class="sub-lbl">📍 正在进行</div>
+            <div class="title">写作 2000字</div>
+            <div class="time">14:00 – 16:00</div>
+          </div>
+          <div class="next">
+            <div class="sub-lbl">⏭ 下一项</div>
+            <div class="nt">整理素材库</div>
+            <div class="time" style="color:rgba(255,255,255,.7)">16:00</div>
+          </div>
+        </div>
+
+        <!-- ☀️ 晨间 -->
+        <div class="card section-block">
+          <div class="section-header am">
+            <span>☀️</span><span>晨间事项</span>
+            <span class="section-count cnt-am">3/3 已完成</span>
+          </div>
+          <div class="task-row">
+            <div class="task-time-col"><div class="t">06:30</div></div>
+            <div class="dot-col"><div class="d done"></div><div class="line"></div></div>
+            <div class="task-body"><div class="task-name done">起床 · 喝水 · 冥想10分钟</div></div>
+            <div class="check-col"><div class="chk done">✓</div></div>
+          </div>
+          <div class="task-row">
+            <div class="task-time-col"><div class="t">07:00</div><div class="t2">~ 07:45</div></div>
+            <div class="dot-col"><div class="d done"></div><div class="line"></div></div>
+            <div class="task-body"><div class="task-name done">运动30分钟</div></div>
+            <div class="check-col"><div class="chk done">✓</div></div>
+          </div>
+          <div class="task-row">
+            <div class="task-time-col"><div class="t">07:45</div></div>
+            <div class="dot-col"><div class="d done"></div></div>
+            <div class="task-body"><div class="task-name done">早餐 + 读书30分钟</div></div>
+            <div class="check-col"><div class="chk done">✓</div></div>
+          </div>
+        </div>
+
+        <!-- 🌿 午间 -->
+        <div class="card section-block">
+          <div class="section-header pm">
+            <span>🌿</span><span>午间事项</span>
+            <span class="section-count cnt-pm">2/4 已完成</span>
+          </div>
+          <div class="task-row">
+            <div class="task-time-col"><div class="t">12:00</div></div>
+            <div class="dot-col"><div class="d done"></div><div class="line"></div></div>
+            <div class="task-body"><div class="task-name done">午饭</div></div>
+            <div class="check-col"><div class="chk done">✓</div></div>
+          </div>
+          <div class="task-row">
+            <div class="task-time-col"><div class="t">13:00</div></div>
+            <div class="dot-col"><div class="d done"></div><div class="line"></div></div>
+            <div class="task-body"><div class="task-name done">午休</div></div>
+            <div class="check-col"><div class="chk done">✓</div></div>
+          </div>
+          <div class="task-row" style="background:#fff8f2">
+            <div class="task-time-col"><div class="t">14:00</div><div class="t2">~ 16:00</div></div>
+            <div class="dot-col"><div class="d current"></div><div class="line"></div></div>
+            <div class="task-body">
+              <div class="task-name" style="color:#374151">写作 2000字 <span class="badge-active">进行中</span> <span class="badge-remind">🔔 提前15分钟</span></div>
+            </div>
+            <div class="check-col"><div class="chk current"></div></div>
+          </div>
+          <div class="task-row">
+            <div class="task-time-col"><div class="t">16:00</div></div>
+            <div class="dot-col"><div class="d"></div></div>
+            <div class="task-body"><div class="task-name" style="color:#374151">整理素材库</div></div>
+            <div class="check-col"><div class="chk"></div></div>
+          </div>
+        </div>
+
+        <!-- 🌙 晚间 -->
+        <div class="card section-block">
+          <div class="section-header eve">
+            <span>🌙</span><span>晚间事项</span>
+            <span class="section-count cnt-eve">1/3 已完成</span>
+          </div>
+          <div class="task-row">
+            <div class="task-time-col"><div class="t">18:30</div></div>
+            <div class="dot-col"><div class="d done"></div><div class="line"></div></div>
+            <div class="task-body"><div class="task-name done">晚饭</div></div>
+            <div class="check-col"><div class="chk done">✓</div></div>
+          </div>
+          <div class="task-row">
+            <div class="task-time-col"><div class="t">21:00</div></div>
+            <div class="dot-col"><div class="d"></div><div class="line"></div></div>
+            <div class="task-body"><div class="task-name" style="color:#374151">复盘今日 · 写日记</div></div>
+            <div class="check-col"><div class="chk"></div></div>
+          </div>
+          <div class="task-row">
+            <div class="task-time-col"><div class="t">22:30</div></div>
+            <div class="dot-col"><div class="d"></div></div>
+            <div class="task-body"><div class="task-name" style="color:#374151">拉伸 · 护肤 · 准备入睡</div></div>
+            <div class="check-col"><div class="chk"></div></div>
+          </div>
+        </div>
+
+        <!-- Today notes -->
+        <div class="card notes-card">
+          <div class="lbl">💡 今日优化记录</div>
+          <textarea class="notes-area" placeholder="记录执行过程中的优化提升事项…">今天写作时间感觉太紧张了，明天试试把写作提前到13点开始。</textarea>
+        </div>
+      </div>
+
+      <!-- CALENDAR VIEW (hidden by default) -->
+      <div id="day-calendar" style="display:none">
+        <div class="calendar-grid">
+          <div class="card cal-card">
+            <div class="cal-header">
+              <div>
+                <span class="cal-month">三月</span>
+                <span style="font-size:13px;color:#9ca3af;margin-left:6px">2026</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span class="cal-avg">本月均完成率 <span>64%</span></span>
+                <div class="nav-btns">
+                  <button class="nav-btn">‹</button>
+                  <button class="nav-btn">›</button>
+                </div>
+              </div>
+            </div>
+            <div class="week-row">
+              <div class="week-hdr sun">日</div><div class="week-hdr">一</div><div class="week-hdr">二</div>
+              <div class="week-hdr">三</div><div class="week-hdr">四</div><div class="week-hdr">五</div>
+              <div class="week-hdr sat">六</div>
+            </div>
+            <div class="day-grid">
+              <!-- Row 1 (prev month) -->
+              <div class="day-cell dc-empty"><span class="dn" style="font-size:12px;color:#d1d5db">22</span></div>
+              <div class="day-cell dc-good"><span class="dn">1</span><span class="dp">100%</span></div>
+              <div class="day-cell dc-good"><span class="dn">2</span><span class="dp">90%</span></div>
+              <div class="day-cell dc-mid"><span class="dn">3</span><span class="dp">60%</span></div>
+              <div class="day-cell dc-good"><span class="dn">4</span><span class="dp">80%</span></div>
+              <div class="day-cell dc-bad"><span class="dn">5</span><span class="dp">30%</span></div>
+              <div class="day-cell dc-good"><span class="dn">6</span><span class="dp">100%</span></div>
+              <!-- Row 2 -->
+              <div class="day-cell dc-good"><span class="dn">7</span><span class="dp">90%</span></div>
+              <div class="day-cell dc-mid"><span class="dn">8</span><span class="dp">70%</span></div>
+              <div class="day-cell dc-good"><span class="dn">9</span><span class="dp">80%</span></div>
+              <div class="day-cell dc-bad"><span class="dn">10</span><span class="dp">20%</span></div>
+              <div class="day-cell dc-good"><span class="dn">11</span><span class="dp">100%</span></div>
+              <div class="day-cell dc-good"><span class="dn">12</span><span class="dp">90%</span></div>
+              <div class="day-cell dc-mid"><span class="dn">13</span><span class="dp">50%</span></div>
+              <!-- Row 3 -->
+              <div class="day-cell dc-good"><span class="dn">14</span><span class="dp">80%</span></div>
+              <div class="day-cell dc-good"><span class="dn">15</span><span class="dp">100%</span></div>
+              <div class="day-cell dc-mid"><span class="dn">16</span><span class="dp">60%</span></div>
+              <div class="day-cell dc-good"><span class="dn">17</span><span class="dp">90%</span></div>
+              <div class="day-cell dc-good"><span class="dn">18</span><span class="dp">80%</span></div>
+              <div class="day-cell dc-bad"><span class="dn">19</span><span class="dp">40%</span></div>
+              <div class="day-cell dc-good"><span class="dn">20</span><span class="dp">100%</span></div>
+              <!-- Row 4 -->
+              <div class="day-cell dc-good"><span class="dn">21</span><span class="dp">80%</span></div>
+              <div class="day-cell dc-mid"><span class="dn">22</span><span class="dp">70%</span></div>
+              <div class="day-cell dc-good"><span class="dn">23</span><span class="dp">90%</span></div>
+              <div class="day-cell dc-today dc-selected"><span class="dn">24</span><span class="dp">60%</span></div>
+              <div class="day-cell dc-future"><span class="dn" style="color:#d1d5db">25</span></div>
+              <div class="day-cell dc-future"><span class="dn" style="color:#d1d5db">26</span></div>
+              <div class="day-cell dc-future"><span class="dn" style="color:#d1d5db">27</span></div>
+              <!-- Row 5 -->
+              <div class="day-cell dc-future"><span class="dn" style="color:#d1d5db">28</span></div>
+              <div class="day-cell dc-future"><span class="dn" style="color:#d1d5db">29</span></div>
+              <div class="day-cell dc-future"><span class="dn" style="color:#d1d5db">30</span></div>
+              <div class="day-cell dc-future"><span class="dn" style="color:#d1d5db">31</span></div>
+              <div class="day-cell dc-empty"></div><div class="day-cell dc-empty"></div><div class="day-cell dc-empty"></div>
+            </div>
+            <div class="cal-legend">
+              <div class="leg"><div class="leg-dot" style="background:#bbf7d0"></div>优秀 ≥80%</div>
+              <div class="leg"><div class="leg-dot" style="background:#fef08a"></div>良好 50–79%</div>
+              <div class="leg"><div class="leg-dot" style="background:#fecaca"></div>待提升 &lt;50%</div>
+              <div class="leg"><div class="leg-dot" style="background:#f97316;border-radius:50%"></div>今天</div>
+              <div class="leg"><div class="leg-dot" style="background:#f3f4f6"></div>未来</div>
+            </div>
+          </div>
+
+          <!-- Right panel -->
+          <div class="right-panel">
+            <div class="card month-stats-card">
+              <div class="ttl">📊 本月数据</div>
+              <div class="stat-row"><span class="k">已记录天数</span><span class="v">24 天</span></div>
+              <div class="stat-row"><span class="k">平均完成率</span><span class="v orange">64%</span></div>
+              <div class="stat-row"><span class="k">满分天数</span><span class="v green">6 天</span></div>
+              <div class="stat-row"><span class="k">最佳单日</span><span class="v">03/15</span></div>
+            </div>
+            <div class="card day-detail-card">
+              <div class="ttl">📋 03/24 详情</div>
+              <div class="detail-row">
+                <div class="detail-chk done">✓</div>
+                <div class="detail-title done">起床 · 喝水 · 冥想</div>
+                <div class="detail-time">06:30</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-chk done">✓</div>
+                <div class="detail-title done">运动30分钟</div>
+                <div class="detail-time">07:00</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-chk done">✓</div>
+                <div class="detail-title done">早餐 + 读书</div>
+                <div class="detail-time">07:45</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-chk no">○</div>
+                <div class="detail-title">写作 2000字</div>
+                <div class="detail-time">14:00</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-chk no">○</div>
+                <div class="detail-title">整理素材库</div>
+                <div class="detail-time">16:00</div>
+              </div>
+              <div style="margin-top:8px;padding-top:8px;border-top:1px solid #f3f4f6">
+                <div style="font-size:11px;color:#9ca3af;margin-bottom:4px">备注</div>
+                <div style="font-size:12px;color:#6b7280;line-height:1.6">今天写作时间感觉太紧张了，明天试试把写作提前到13点开始。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 月计划 ====== -->
+    <div id="panel-month" style="display:none">
+      <div class="tip">💡 月计划用于记录本月想要完成的目标，比日计划更宏观，适合周度回顾。</div>
+      <div class="month-plan-header">
+        <div class="month-nav-row">
+          <button class="nav-btn">‹</button>
+          <span class="month-label">2026年3月</span>
+          <button class="nav-btn">›</button>
+        </div>
+      </div>
+      <div class="stats4">
+        <div class="sc"><div class="n green">3</div><div class="l">已完成</div></div>
+        <div class="sc"><div class="n orange">4</div><div class="l">进行中</div></div>
+        <div class="sc"><div class="n" style="color:#6b7280">3</div><div class="l">待开始</div></div>
+        <div class="sc"><div class="n" style="color:#e85d5d">30%</div><div class="l">完成率</div></div>
+      </div>
+      <div class="goal-list-header">本月目标 <button class="add-btn">＋ 添加目标</button></div>
+      <div class="goal-item">
+        <div class="goal-dot" style="background:#2563eb"></div>
+        <div class="goal-title">发布4篇长文</div>
+        <span class="goal-tag tag-w">创作</span>
+        <span class="goal-status gs-doing">进行中 2/4</span>
+      </div>
+      <div class="goal-item">
+        <div class="goal-dot" style="background:#e85d5d"></div>
+        <div class="goal-title">完成一个短篇故事初稿</div>
+        <span class="goal-tag tag-w">创作</span>
+        <span class="goal-status gs-todo">待开始</span>
+      </div>
+      <div class="goal-item">
+        <div class="goal-dot" style="background:#16a34a"></div>
+        <div class="goal-title">坚持运动20天</div>
+        <span class="goal-tag tag-h">健康</span>
+        <span class="goal-status gs-doing">进行中 14/20</span>
+      </div>
+      <div class="goal-item">
+        <div class="goal-dot" style="background:#9333ea"></div>
+        <div class="goal-title">整理家里储物间</div>
+        <span class="goal-tag tag-l">生活</span>
+        <span class="goal-status gs-done">已完成 ✓</span>
+      </div>
+      <div class="goal-item">
+        <div class="goal-dot" style="background:#ca8a04"></div>
+        <div class="goal-title">副业收入 ≥ 3000元</div>
+        <span class="goal-tag tag-f">财务</span>
+        <span class="goal-status gs-doing">进行中 1800/3000</span>
+      </div>
+      <div class="goal-item">
+        <div class="goal-dot" style="background:#ea580c"></div>
+        <div class="goal-title">读完《写作这回事》</div>
+        <span class="goal-tag tag-s">学习</span>
+        <span class="goal-status gs-done">已完成 ✓</span>
+      </div>
+      <div class="goal-item">
+        <div class="goal-dot" style="background:#ea580c"></div>
+        <div class="goal-title">学习剪映高级剪辑技巧</div>
+        <span class="goal-tag tag-s">学习</span>
+        <span class="goal-status gs-done">已完成 ✓</span>
+      </div>
+      <div class="goal-item">
+        <div class="goal-dot" style="background:#2563eb"></div>
+        <div class="goal-title">做3期视频脚本</div>
+        <span class="goal-tag tag-w">创作</span>
+        <span class="goal-status gs-todo">待开始</span>
+      </div>
+      <div class="month-notes-sec">
+        <div class="mn-lbl">本月备忘</div>
+        <textarea class="notes-area" style="height:80px" placeholder="记录本月的想法、重点提醒或复盘笔记…">3月重点：把短篇故事大纲先确定下来，不要再拖了。运动方面尽量每天打卡，差两天也没关系但不要断超过3天。</textarea>
+      </div>
+    </div>
+
+    <!-- ====== 年计划 ====== -->
+    <div id="panel-year" style="display:none">
+      <div class="tip">💡 年计划用于设定全年大方向目标，按季度拆解，年底回顾时一目了然。</div>
+      <div class="month-plan-header">
+        <div class="month-nav-row">
+          <button class="nav-btn">‹</button>
+          <span class="month-label" style="min-width:60px">2026年</span>
+          <button class="nav-btn">›</button>
+        </div>
+      </div>
+      <div class="year3">
+        <div class="yc"><div class="yn" style="color:#e85d5d">12</div><div class="yl">年度目标总数</div></div>
+        <div class="yc"><div class="yn green">3</div><div class="yl">已完成</div></div>
+        <div class="yc"><div class="yn orange">38%</div><div class="yl">平均进度</div></div>
+      </div>
+      <div class="qtabs">
+        <button class="qt active">全部</button>
+        <button class="qt">Q1 一季度</button>
+        <button class="qt">Q2 二季度</button>
+        <button class="qt">Q3 三季度</button>
+        <button class="qt">Q4 四季度</button>
+      </div>
+      <div class="goal-list-header">年度目标 <button class="add-btn">＋ 添加年度目标</button></div>
+      <div class="annual-goal">
+        <div class="ag-top">
+          <div class="goal-dot" style="background:#2563eb"></div>
+          <span class="ag-title">全年发布48篇优质长文</span>
+          <span class="goal-tag tag-w">创作</span>
+          <span class="ag-pct">25%</span>
+        </div>
+        <div class="ag-bar"><div class="ag-fill" style="width:25%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div>
+        <div class="ag-meta"><span class="ag-desc">已完成 12 篇 / 目标 48 篇</span><span class="qbadge q-all">Q1~Q4</span></div>
+      </div>
+      <div class="annual-goal">
+        <div class="ag-top">
+          <div class="goal-dot" style="background:#e85d5d"></div>
+          <span class="ag-title">完成两部中短篇小说初稿</span>
+          <span class="goal-tag tag-w">创作</span>
+          <span class="ag-pct">10%</span>
+        </div>
+        <div class="ag-bar"><div class="ag-fill" style="width:10%;background:linear-gradient(90deg,#e85d5d,#f87171)"></div></div>
+        <div class="ag-meta"><span class="ag-desc">第一部大纲已完成，正文尚未开始</span><span class="qbadge q2">Q2~Q3</span></div>
+      </div>
+      <div class="annual-goal">
+        <div class="ag-top">
+          <div class="goal-dot" style="background:#16a34a"></div>
+          <span class="ag-title">体重减至55kg，保持健身习惯</span>
+          <span class="goal-tag tag-h">健康</span>
+          <span class="ag-pct">40%</span>
+        </div>
+        <div class="ag-bar"><div class="ag-fill" style="width:40%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div></div>
+        <div class="ag-meta"><span class="ag-desc">当前体重 58kg，运动频率 4次/周</span><span class="qbadge q-all">全年</span></div>
+      </div>
+      <div class="annual-goal">
+        <div class="ag-top">
+          <div class="goal-dot" style="background:#ca8a04"></div>
+          <span class="ag-title">副业年收入突破5万元</span>
+          <span class="goal-tag tag-f">财务</span>
+          <span class="ag-pct">22%</span>
+        </div>
+        <div class="ag-bar"><div class="ag-fill" style="width:22%;background:linear-gradient(90deg,#ca8a04,#fbbf24)"></div></div>
+        <div class="ag-meta"><span class="ag-desc">已到账 11000元 / 目标 50000元</span><span class="qbadge q-all">全年</span></div>
+      </div>
+      <div class="annual-goal">
+        <div class="ag-top">
+          <div class="goal-dot" style="background:#ea580c"></div>
+          <span class="ag-title">读完24本书（每半月一本）</span>
+          <span class="goal-tag tag-s">学习</span>
+          <span class="ag-pct">25%</span>
+        </div>
+        <div class="ag-bar"><div class="ag-fill" style="width:25%;background:linear-gradient(90deg,#ea580c,#fb923c)"></div></div>
+        <div class="ag-meta"><span class="ag-desc">已读完 6 本</span><span class="qbadge q-all">全年</span></div>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="heatmap-sec">
+        <div class="hm-title">全年日计划完成率热力图</div>
+        <div class="hm-months">
+          <div class="hm-m">1月</div><div class="hm-m">2月</div><div class="hm-m">3月</div>
+          <div class="hm-m">4月</div><div class="hm-m">5月</div><div class="hm-m">6月</div>
+          <div class="hm-m">7月</div><div class="hm-m">8月</div><div class="hm-m">9月</div>
+          <div class="hm-m">10月</div><div class="hm-m">11月</div><div class="hm-m">12月</div>
+        </div>
+        <div class="hm-grid">
+          <div class="hm-cell hm4">78%</div>
+          <div class="hm-cell hm3">65%</div>
+          <div class="hm-cell hm2">52%</div>
+          <div class="hm-cell hm0">—</div><div class="hm-cell hm0">—</div>
+          <div class="hm-cell hm0">—</div><div class="hm-cell hm0">—</div>
+          <div class="hm-cell hm0">—</div><div class="hm-cell hm0">—</div>
+          <div class="hm-cell hm0">—</div><div class="hm-cell hm0">—</div>
+          <div class="hm-cell hm0">—</div>
+        </div>
+        <div class="hm-legend">
+          <span>完成率：</span>
+          <div class="hml-dot" style="background:#f3f4f6"></div><span>低</span>
+          <div class="hml-dot" style="background:#fca5a5"></div>
+          <div class="hml-dot" style="background:#f87171"></div>
+          <div class="hml-dot" style="background:#e85d5d"></div><span>高</span>
+        </div>
+      </div>
+
+      <div class="yr-notes">
+        <div class="mn-lbl">年度备忘 / 年初宣言</div>
+        <textarea class="notes-area" style="height:90px" placeholder="写下今年的核心主题、年初宣言，或年底想回顾的话…">2026年的主题词：「扎根」。不追热点，不焦虑，安静地写好每一个故事，把副业做成一份有尊严的收入。</textarea>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /shell -->
+
+
+<!-- ====== Preset Modal ====== -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>✏️ 日程预设管理</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- LIST VIEW -->
+      <div id="preset-list">
+        <button class="preset-add-btn" onclick="openModal('edit')">＋ 添加事项</button>
+        <div class="preset-item">
+          <div class="pi-info">
+            <div class="pi-top">
+              <span class="pi-time">06:30</span>
+              <span class="pi-title">起床 · 喝水 · 冥想10分钟</span>
+            </div>
+          </div>
+          <div class="pi-actions">
+            <button class="pi-edit" onclick="openModal('edit')">编辑</button>
+            <button class="pi-del">删除</button>
+          </div>
+        </div>
+        <div class="preset-item">
+          <div class="pi-info">
+            <div class="pi-top">
+              <span class="pi-time">07:00</span>
+              <span class="pi-title">运动30分钟</span>
+              <span class="pi-remind">🔔 10min</span>
+            </div>
+          </div>
+          <div class="pi-actions">
+            <button class="pi-edit" onclick="openModal('edit')">编辑</button>
+            <button class="pi-del">删除</button>
+          </div>
+        </div>
+        <div class="preset-item">
+          <div class="pi-info">
+            <div class="pi-top">
+              <span class="pi-time">14:00</span>
+              <span class="pi-title">写作 2000字</span>
+              <span class="pi-remind">🔔 15min</span>
+            </div>
+            <div class="pi-desc">核心产出时段，不接受打扰</div>
+          </div>
+          <div class="pi-actions">
+            <button class="pi-edit" onclick="openModal('edit')">编辑</button>
+            <button class="pi-del">删除</button>
+          </div>
+        </div>
+        <div class="preset-item">
+          <div class="pi-info">
+            <div class="pi-top">
+              <span class="pi-time">21:00</span>
+              <span class="pi-title">复盘今日 · 写日记</span>
+            </div>
+          </div>
+          <div class="pi-actions">
+            <button class="pi-edit" onclick="openModal('edit')">编辑</button>
+            <button class="pi-del">删除</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT FORM VIEW -->
+      <div id="preset-edit" style="display:none">
+        <div class="edit-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>开始时间 *</label>
+              <input type="time" value="14:00">
+            </div>
+            <div class="form-group">
+              <label>结束时间</label>
+              <input type="time" value="16:00">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>事项名称 *</label>
+            <input type="text" value="写作 2000字" placeholder="如：晨间运动30分钟">
+          </div>
+          <div class="form-group">
+            <label>描述（可选）</label>
+            <textarea rows="2" placeholder="补充说明…">核心产出时段，不接受打扰</textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>时段</label>
+              <select>
+                <option>☀️ 晨间</option>
+                <option selected>🌿 午间</option>
+                <option>🌙 晚间</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>提前提醒（分钟）</label>
+              <input type="number" value="15" min="0" max="60">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-cancel" onclick="openModal('list')">取消</button>
+            <button class="btn-save">保存事项</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Demo control bar -->
+<div class="demo-bar">
+  <span>效果图演示：</span>
+  <button class="db-btn on" onclick="switchMain('day');switchDay('today');this.closest('.demo-bar').querySelectorAll('.db-btn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">日计划·今日</button>
+  <button class="db-btn" onclick="switchMain('day');switchDay('calendar');this.closest('.demo-bar').querySelectorAll('.db-btn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">日计划·月历</button>
+  <div class="db-divider"></div>
+  <button class="db-btn" onclick="switchMain('month');this.closest('.demo-bar').querySelectorAll('.db-btn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">月计划</button>
+  <button class="db-btn" onclick="switchMain('year');this.closest('.demo-bar').querySelectorAll('.db-btn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">年计划</button>
+  <div class="db-divider"></div>
+  <button class="db-btn" onclick="openModal('list');this.closest('.demo-bar').querySelectorAll('.db-btn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">预设管理弹窗</button>
+  <button class="db-btn" onclick="openModal('edit');this.closest('.demo-bar').querySelectorAll('.db-btn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">编辑单条预设</button>
+</div>
+
+<script>
+const CAPTIONS = {
+  day: '生活 SOP · 固定事项减少决策，让生活轻松有规律',
+  month: '月度目标管理 · 宏观把控，每月复盘',
+  year: '年度规划总览 · 锚定方向，季度拆解',
+}
+function switchMain(tab) {
+  ['day','month','year'].forEach(t => {
+    document.getElementById('panel-'+t).style.display = t === tab ? 'block' : 'none'
+    document.getElementById('tab-'+t+'-btn').classList.toggle('active', t === tab)
+  })
+  document.getElementById('sub-caption').textContent = CAPTIONS[tab]
+}
+function switchDay(view) {
+  document.getElementById('day-today').style.display = view === 'today' ? 'block' : 'none'
+  document.getElementById('day-calendar').style.display = view === 'calendar' ? 'block' : 'none'
+  document.getElementById('sub-today-btn').classList.toggle('active', view === 'today')
+  document.getElementById('sub-cal-btn').classList.toggle('active', view === 'calendar')
+}
+function openModal(view) {
+  document.getElementById('modal').style.display = 'flex'
+  document.getElementById('preset-list').style.display = view === 'list' ? 'block' : 'none'
+  document.getElementById('preset-edit').style.display = view === 'edit' ? 'block' : 'none'
+}
+function closeModal() {
+  document.getElementById('modal').style.display = 'none'
+}
+</script>
+</body>
+</html>

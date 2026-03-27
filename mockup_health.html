@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>健康管理 - 效果图</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111827; color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; min-height: 100vh; }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  /* 侧边栏 */
+  .sidebar { width: 200px; background: #1f2937; border-right: 1px solid #374151; padding: 16px 0; flex-shrink: 0; }
+  .sidebar-logo { padding: 12px 16px 20px; font-size: 18px; font-weight: 700; color: #f9fafb; }
+  .sidebar-item { display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: #9ca3af; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .sidebar-item:hover { background: #374151; color: #f9fafb; }
+  .sidebar-item.active { background: #374151; color: #60a5fa; }
+
+  /* 主内容 */
+  .main { flex: 1; padding: 24px; overflow-y: auto; }
+  .page-title { font-size: 22px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+
+  /* Tab 切换 */
+  .tabs { display: flex; gap: 4px; background: #1f2937; border-radius: 10px; padding: 4px; margin-bottom: 24px; width: fit-content; }
+  .tab { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; color: #9ca3af; transition: all 0.15s; }
+  .tab.active { background: #374151; color: #f9fafb; }
+
+  /* 卡片 */
+  .card { background: #1f2937; border: 1px solid #374151; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 13px; color: #9ca3af; margin-bottom: 12px; font-weight: 500; }
+
+  /* 体重今日卡片 */
+  .today-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .today-card { background: #1f2937; border: 1px solid #374151; border-radius: 12px; padding: 16px; text-align: center; }
+  .today-card .label { font-size: 12px; color: #9ca3af; margin-bottom: 6px; }
+  .today-card .value { font-size: 28px; font-weight: 700; color: #f9fafb; }
+  .today-card .unit { font-size: 14px; color: #9ca3af; font-weight: 400; }
+  .today-card .change { font-size: 13px; margin-top: 4px; }
+  .change.down { color: #34d399; }
+  .change.up { color: #f87171; }
+  .change.same { color: #9ca3af; }
+
+  /* 按钮 */
+  .btn { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: #60a5fa; color: #fff; }
+  .btn-primary:hover { background: #3b82f6; }
+  .btn-outline { background: transparent; color: #9ca3af; border: 1px solid #374151; }
+  .btn-outline:hover { border-color: #60a5fa; color: #60a5fa; }
+  .btn-sm { padding: 5px 12px; font-size: 13px; }
+
+  /* 图表区 */
+  .chart-container { height: 200px; position: relative; }
+
+  /* 历史记录 */
+  .record-list { display: flex; flex-direction: column; gap: 8px; }
+  .record-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #111827; border-radius: 8px; }
+  .record-date { font-size: 13px; color: #9ca3af; width: 70px; }
+  .record-value { font-size: 15px; font-weight: 600; color: #f9fafb; }
+  .record-change { font-size: 13px; width: 70px; text-align: right; }
+  .record-note { font-size: 12px; color: #6b7280; flex: 1; text-align: center; }
+
+  /* 维度网格 */
+  .measure-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .measure-card { background: #111827; border-radius: 10px; padding: 14px; text-align: center; }
+  .measure-card .m-label { font-size: 12px; color: #9ca3af; margin-bottom: 6px; }
+  .measure-card .m-value { font-size: 20px; font-weight: 700; color: #f9fafb; }
+  .measure-card .m-unit { font-size: 11px; color: #6b7280; }
+  .measure-card .m-change { font-size: 11px; margin-top: 3px; }
+
+  /* 运动记录 */
+  .exercise-list { display: flex; flex-direction: column; gap: 8px; }
+  .exercise-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #111827; border-radius: 8px; }
+  .exercise-icon { font-size: 22px; width: 36px; text-align: center; }
+  .exercise-info { flex: 1; }
+  .exercise-name { font-size: 14px; font-weight: 600; color: #f9fafb; }
+  .exercise-meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .exercise-date { font-size: 12px; color: #9ca3af; }
+
+  /* 弹窗效果 */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .modal { background: #1f2937; border: 1px solid #374151; border-radius: 14px; padding: 24px; width: 360px; }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .form-row { margin-bottom: 14px; }
+  .form-label { font-size: 13px; color: #9ca3af; margin-bottom: 6px; display: block; }
+  .form-input { width: 100%; background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 9px 12px; color: #f9fafb; font-size: 14px; outline: none; }
+  .form-input:focus { border-color: #60a5fa; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-label { font-size: 14px; font-weight: 600; color: #e5e7eb; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #374151; color: #9ca3af; }
+
+  /* 运动类型快选 */
+  .exercise-types { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .exercise-type-btn { padding: 5px 12px; border-radius: 20px; font-size: 13px; border: 1px solid #374151; background: transparent; color: #9ca3af; cursor: pointer; }
+  .exercise-type-btn.selected { border-color: #60a5fa; color: #60a5fa; background: rgba(96,165,250,0.1); }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- 侧边栏 -->
+  <div class="sidebar">
+    <div class="sidebar-logo">🍛 咖喱小助手</div>
+    <div class="sidebar-item">🏠 首页</div>
+    <div class="sidebar-item">📚 素材库</div>
+    <div class="sidebar-item">✍️ 写作打卡</div>
+    <div class="sidebar-item">📋 日程管理</div>
+    <div class="sidebar-item">📱 自媒体</div>
+    <div class="sidebar-item active">💪 健康管理</div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="main">
+    <div class="page-title">💪 健康管理</div>
+
+    <!-- Tab 切换 -->
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('weight')">⚖️ 体重</div>
+      <div class="tab" onclick="showTab('measure')">📏 维度</div>
+      <div class="tab" onclick="showTab('exercise')">🏃 运动</div>
+    </div>
+
+    <!-- ===== 体重 Tab ===== -->
+    <div id="tab-weight">
+      <!-- 今日数据 -->
+      <div class="today-row">
+        <div class="today-card">
+          <div class="label">今日体重</div>
+          <div class="value">57.3<span class="unit"> kg</span></div>
+          <div class="change down">▼ 0.2 较昨日</div>
+        </div>
+        <div class="today-card">
+          <div class="label">本月变化</div>
+          <div class="value">-1.1<span class="unit"> kg</span></div>
+          <div class="change down">▼ 持续下降中</div>
+        </div>
+        <div class="today-card">
+          <div class="label">目标体重</div>
+          <div class="value">54.0<span class="unit"> kg</span></div>
+          <div class="change same">还差 3.3 kg</div>
+        </div>
+      </div>
+
+      <!-- 趋势图 -->
+      <div class="card">
+        <div class="section-header">
+          <div class="section-label">📈 近30天趋势</div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline btn-sm" style="color:#60a5fa;border-color:#60a5fa;">30天</button>
+            <button class="btn btn-outline btn-sm">90天</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="weightChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 历史记录 -->
+      <div class="card">
+        <div class="section-header">
+          <div class="section-label">📋 历史记录</div>
+          <button class="btn btn-primary btn-sm" onclick="showModal('weight-modal')">+ 记录体重</button>
+        </div>
+        <div class="record-list">
+          <div class="record-item">
+            <span class="record-date">03-23</span>
+            <span class="record-value">57.3 kg</span>
+            <span class="record-note">晨起空腹</span>
+            <span class="record-change change down">▼ 0.2</span>
+          </div>
+          <div class="record-item">
+            <span class="record-date">03-22</span>
+            <span class="record-value">57.5 kg</span>
+            <span class="record-note"></span>
+            <span class="record-change change down">▼ 0.3</span>
+          </div>
+          <div class="record-item">
+            <span class="record-date">03-21</span>
+            <span class="record-value">57.8 kg</span>
+            <span class="record-note">聚餐后</span>
+            <span class="record-change change up">▲ 0.5</span>
+          </div>
+          <div class="record-item">
+            <span class="record-date">03-20</span>
+            <span class="record-value">57.3 kg</span>
+            <span class="record-note"></span>
+            <span class="record-change change same">— </span>
+          </div>
+          <div class="record-item">
+            <span class="record-date">03-19</span>
+            <span class="record-value">57.3 kg</span>
+            <span class="record-note"></span>
+            <span class="record-change change down">▼ 0.2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 维度 Tab ===== -->
+    <div id="tab-measure" style="display:none;">
+      <div class="card">
+        <div class="section-header">
+          <div class="section-label">最新测量（03-20）</div>
+          <button class="btn btn-primary btn-sm" onclick="showModal('measure-modal')">+ 记录维度</button>
+        </div>
+        <div class="measure-grid">
+          <div class="measure-card">
+            <div class="m-label">胸围</div>
+            <div class="m-value">85<span class="m-unit"> cm</span></div>
+            <div class="m-change change down">▼ 1 上次</div>
+          </div>
+          <div class="measure-card">
+            <div class="m-label">腰围</div>
+            <div class="m-value">64<span class="m-unit"> cm</span></div>
+            <div class="m-change change down">▼ 2 上次</div>
+          </div>
+          <div class="measure-card">
+            <div class="m-label">臀围</div>
+            <div class="m-value">90<span class="m-unit"> cm</span></div>
+            <div class="m-change change same">— 上次</div>
+          </div>
+          <div class="measure-card">
+            <div class="m-label">大腿围</div>
+            <div class="m-value">52<span class="m-unit"> cm</span></div>
+            <div class="m-change change down">▼ 1 上次</div>
+          </div>
+          <div class="measure-card">
+            <div class="m-label">臂围</div>
+            <div class="m-value">28<span class="m-unit"> cm</span></div>
+            <div class="m-change change same">— 上次</div>
+          </div>
+          <div class="measure-card">
+            <div class="m-label">小腿围</div>
+            <div class="m-value">35<span class="m-unit"> cm</span></div>
+            <div class="m-change change down">▼ 0.5 上次</div>
+          </div>
+          <div class="measure-card">
+            <div class="m-label">手腕围</div>
+            <div class="m-value">15<span class="m-unit"> cm</span></div>
+            <div class="m-change change same">— 上次</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label" style="margin-bottom:14px;">📋 测量历史</div>
+        <div class="record-list">
+          <div class="record-item">
+            <span class="record-date">03-20</span>
+            <span style="flex:1;font-size:13px;color:#9ca3af;">胸85 · 腰64 · 臀90 · 腿52 · 臂28 · 小腿35 · 腕15</span>
+          </div>
+          <div class="record-item">
+            <span class="record-date">03-01</span>
+            <span style="flex:1;font-size:13px;color:#9ca3af;">胸86 · 腰66 · 臀90 · 腿53 · 臂28 · 小腿35.5 · 腕15</span>
+          </div>
+          <div class="record-item">
+            <span class="record-date">02-01</span>
+            <span style="flex:1;font-size:13px;color:#9ca3af;">胸87 · 腰68 · 臀91 · 腿54 · 臂29 · 小腿36 · 腕15</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 运动 Tab ===== -->
+    <div id="tab-exercise" style="display:none;">
+      <div class="today-row">
+        <div class="today-card">
+          <div class="label">本周运动</div>
+          <div class="value">4<span class="unit"> 次</span></div>
+          <div class="change down">🔥 超出目标</div>
+        </div>
+        <div class="today-card">
+          <div class="label">本月累计</div>
+          <div class="value">18<span class="unit"> 次</span></div>
+          <div class="change same">坚持得不错</div>
+        </div>
+        <div class="today-card">
+          <div class="label">本月消耗</div>
+          <div class="value">4,320<span class="unit"> kcal</span></div>
+          <div class="change down">▼ 体脂在掉</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <div class="section-label">🏃 运动记录</div>
+          <button class="btn btn-primary btn-sm" onclick="showModal('exercise-modal')">+ 记录运动</button>
+        </div>
+        <div class="exercise-list">
+          <div class="exercise-item">
+            <div class="exercise-icon">🧘</div>
+            <div class="exercise-info">
+              <div class="exercise-name">普拉提</div>
+              <div class="exercise-meta">45分钟 · 180 kcal</div>
+            </div>
+            <div class="exercise-date">03-23</div>
+          </div>
+          <div class="exercise-item">
+            <div class="exercise-icon">🚶</div>
+            <div class="exercise-info">
+              <div class="exercise-name">散步</div>
+              <div class="exercise-meta">60分钟</div>
+            </div>
+            <div class="exercise-date">03-22</div>
+          </div>
+          <div class="exercise-item">
+            <div class="exercise-icon">🏊</div>
+            <div class="exercise-info">
+              <div class="exercise-name">游泳</div>
+              <div class="exercise-meta">40分钟 · 350 kcal</div>
+            </div>
+            <div class="exercise-date">03-21</div>
+          </div>
+          <div class="exercise-item">
+            <div class="exercise-icon">💃</div>
+            <div class="exercise-info">
+              <div class="exercise-name">跳操</div>
+              <div class="exercise-meta">30分钟 · 200 kcal</div>
+            </div>
+            <div class="exercise-date">03-20</div>
+          </div>
+          <div class="exercise-item">
+            <div class="exercise-icon">🏋️</div>
+            <div class="exercise-info">
+              <div class="exercise-name">力量训练</div>
+              <div class="exercise-meta">50分钟 · 280 kcal</div>
+            </div>
+            <div class="exercise-date">03-18</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 记录体重弹窗 -->
+<div class="modal-overlay" id="weight-modal" style="display:none;" onclick="hideModal('weight-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">⚖️ 记录体重</div>
+    <div class="form-row">
+      <label class="form-label">日期</label>
+      <input class="form-input" type="date" value="2026-03-23">
+    </div>
+    <div class="form-row">
+      <label class="form-label">体重（kg）</label>
+      <input class="form-input" type="number" placeholder="例：57.3" step="0.1">
+    </div>
+    <div class="form-row">
+      <label class="form-label">备注（可选）</label>
+      <input class="form-input" type="text" placeholder="例：晨起空腹、聚餐后...">
+    </div>
+    <div class="form-row">
+      <label class="form-label">目标体重（kg，可选）</label>
+      <input class="form-input" type="number" placeholder="例：54.0" step="0.1">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="hideModal('weight-modal')">取消</button>
+      <button class="btn btn-primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 记录维度弹窗 -->
+<div class="modal-overlay" id="measure-modal" style="display:none;" onclick="hideModal('measure-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">📏 记录维度</div>
+    <div class="form-row">
+      <label class="form-label">日期</label>
+      <input class="form-input" type="date" value="2026-03-23">
+    </div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label class="form-label">胸围 (cm)</label>
+        <input class="form-input" type="number" placeholder="85" step="0.5">
+      </div>
+      <div class="form-row">
+        <label class="form-label">腰围 (cm)</label>
+        <input class="form-input" type="number" placeholder="64" step="0.5">
+      </div>
+      <div class="form-row">
+        <label class="form-label">臀围 (cm)</label>
+        <input class="form-input" type="number" placeholder="90" step="0.5">
+      </div>
+      <div class="form-row">
+        <label class="form-label">大腿围 (cm)</label>
+        <input class="form-input" type="number" placeholder="52" step="0.5">
+      </div>
+      <div class="form-row">
+        <label class="form-label">臂围 (cm)</label>
+        <input class="form-input" type="number" placeholder="28" step="0.5">
+      </div>
+      <div class="form-row">
+        <label class="form-label">小腿围 (cm)</label>
+        <input class="form-input" type="number" placeholder="35" step="0.5">
+      </div>
+      <div class="form-row">
+        <label class="form-label">手腕围 (cm)</label>
+        <input class="form-input" type="number" placeholder="15" step="0.5">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="hideModal('measure-modal')">取消</button>
+      <button class="btn btn-primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 记录运动弹窗 -->
+<div class="modal-overlay" id="exercise-modal" style="display:none;" onclick="hideModal('exercise-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">🏃 记录运动</div>
+    <div class="form-row">
+      <label class="form-label">日期</label>
+      <input class="form-input" type="date" value="2026-03-23">
+    </div>
+    <div class="form-row">
+      <label class="form-label">运动类型</label>
+      <div class="exercise-types">
+        <button class="exercise-type-btn selected">🧘 普拉提</button>
+        <button class="exercise-type-btn">🚶 散步</button>
+        <button class="exercise-type-btn">🏃 跑步</button>
+        <button class="exercise-type-btn">🏊 游泳</button>
+        <button class="exercise-type-btn">💃 跳操</button>
+        <button class="exercise-type-btn">🏋️ 力量训练</button>
+        <button class="exercise-type-btn">🚴 骑行</button>
+        <button class="exercise-type-btn">🧗 爬山</button>
+        <button class="exercise-type-btn">➕ 自定义</button>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label class="form-label">时长（分钟，可选）</label>
+        <input class="form-input" type="number" placeholder="45">
+      </div>
+      <div class="form-row">
+        <label class="form-label">消耗（kcal，可选）</label>
+        <input class="form-input" type="number" placeholder="180">
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">备注（可选）</label>
+      <input class="form-input" type="text" placeholder="今天状态不错...">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="hideModal('exercise-modal')">取消</button>
+      <button class="btn btn-primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tab 切换
+function showTab(name) {
+  ['weight','measure','exercise'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === name ? 'block' : 'none'
+  })
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', ['weight','measure','exercise'][i] === name)
+  })
+}
+
+// 弹窗
+function showModal(id) { document.getElementById(id).style.display = 'flex' }
+function hideModal(id) { document.getElementById(id).style.display = 'none' }
+
+// 运动类型快选
+document.querySelectorAll('.exercise-type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.exercise-type-btn').forEach(b => b.classList.remove('selected'))
+    btn.classList.add('selected')
+  })
+})
+
+// 体重折线图
+const ctx = document.getElementById('weightChart').getContext('2d')
+const labels = ['03-01','03-03','03-05','03-07','03-09','03-11','03-13','03-15','03-17','03-19','03-21','03-23']
+const data = [58.4, 58.2, 58.0, 57.9, 58.1, 57.8, 57.6, 57.7, 57.5, 57.3, 57.8, 57.3]
+
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      data,
+      borderColor: '#60a5fa',
+      backgroundColor: 'rgba(96,165,250,0.08)',
+      borderWidth: 2,
+      pointBackgroundColor: '#60a5fa',
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      fill: true,
+      tension: 0.4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#1f2937' }, ticks: { color: '#6b7280', font: { size: 11 } } },
+      y: {
+        grid: { color: '#374151' },
+        ticks: { color: '#6b7280', font: { size: 11 }, callback: v => v + 'kg' },
+        min: 56.5, max: 59,
+      }
+    }
+  }
+})
+</script>
+</body>
+</html>

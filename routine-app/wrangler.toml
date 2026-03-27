@@ -1,0 +1,13 @@
+name = "routine-sop"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "routine-db"
+database_id = "381b5cc0-dd70-4859-b75d-42ee3a1d2ad0"
+
+[vars]
+AUTH_USERNAME    = "carly"
+AUTH_PASSWORD    = "carly"

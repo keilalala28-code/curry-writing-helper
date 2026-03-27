@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>码字计划 - 成就效果图</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: { colors: { primary: '#e85d4a' } } } }
+</script>
+<style>
+body { font-family: 'PingFang SC','Microsoft YaHei',sans-serif; background:#f9fafb; margin:0; }
+
+/* 解锁 toast 动画 */
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.toast { animation: slideUp 0.4s ease both; }
+
+/* 徽章光晕 */
+.badge-glow { box-shadow: 0 0 10px 2px rgba(232,93,74,0.35); }
+
+/* 陈列室弹层动画 */
+@keyframes fadeIn { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
+.gallery { animation: fadeIn 0.25s ease both; }
+
+.badge-locked { filter: grayscale(1); opacity: 0.3; }
+.progress-bar { background: linear-gradient(90deg,#f5a89a,#e85d4a); border-radius:9999px; }
+</style>
+</head>
+<body>
+
+<div class="flex min-h-screen bg-gray-50">
+
+  <!-- 左侧导航 (完全照原版) -->
+  <aside class="w-52 bg-white border-r border-gray-200 flex flex-col shadow-sm flex-shrink-0">
+    <div class="p-4 border-b border-gray-100">
+      <h1 class="text-xl font-bold text-red-500">🍛 咖喱小助手</h1>
+      <p class="text-xs text-gray-400 mt-0.5">写作资源管理库</p>
+    </div>
+    <nav class="flex-1 p-2 space-y-0.5 text-sm">
+      <a class="block px-3 py-2 rounded-lg font-medium text-gray-500">🎯 每日灵感</a>
+      <a class="block px-3 py-2 rounded-lg font-medium bg-red-50 text-red-500">✍️ 码字计划</a>
+      <a class="block px-3 py-2 rounded-lg font-medium text-gray-500">📂 分类浏览</a>
+      <a class="block px-3 py-2 rounded-lg font-medium text-gray-500">🔍 搜索文章</a>
+      <a class="block px-3 py-2 rounded-lg font-medium text-gray-500">🏷️ 标签管理</a>
+      <a class="block px-3 py-2 rounded-lg font-medium text-gray-500">📊 数据统计</a>
+      <a class="block px-3 py-2 rounded-lg font-medium text-gray-500">📥 导入文章</a>
+      <a class="block px-3 py-2 rounded-lg font-medium text-gray-500">🎬 故事框架</a>
+      <a class="block px-3 py-2 rounded-lg font-medium text-gray-500">🤖 批量分析</a>
+    </nav>
+    <div class="p-3 border-t border-gray-100">
+      <button class="w-full text-left px-3 py-2 text-sm text-gray-400">退出登录</button>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="flex-1 overflow-auto">
+    <div class="max-w-5xl mx-auto p-6">
+
+      <!-- ====== 标题行：完全照原版，只在右侧加了🏆按钮 ====== -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">✍️ 码字计划</h2>
+          <p class="text-sm text-gray-400 mt-0.5">记录每日码字，向目标冲刺！</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- 新增：成就按钮，轻量，不抢眼 -->
+          <button onclick="document.getElementById('gallery').classList.toggle('hidden')"
+            class="flex items-center gap-1.5 px-3 py-2 bg-amber-50 text-amber-600 text-sm rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors font-medium">
+            🏆 <span class="font-semibold">12</span><span class="text-amber-400">/200</span>
+          </button>
+          <!-- 原有按钮 -->
+          <button class="flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg">⚙ 设置目标</button>
+        </div>
+      </div>
+
+      <!-- ====== 主体双列，完全照原版 ====== -->
+      <div class="grid gap-4" style="grid-template-columns: 1fr 1.5fr;">
+
+        <!-- 左列 -->
+        <div class="flex flex-col gap-4">
+
+          <!-- 今日码字卡 -->
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-2.5 h-1 bg-red-400 rounded-full"></div>
+              <span class="text-sm font-semibold text-gray-600">今日码字</span>
+            </div>
+            <div class="text-4xl font-bold text-gray-900 leading-none mb-1">1,820<span class="text-base font-normal text-gray-400 ml-1">字</span></div>
+            <p class="text-xs text-gray-400 mb-4">目标 3,000 字 · 还差 1,180 字</p>
+
+            <!-- 仪表盘 SVG -->
+            <div class="relative flex justify-center items-end mb-3" style="height:110px">
+              <svg viewBox="0 0 200 110" class="w-full max-w-[200px]">
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#f0f0f0" stroke-width="14" stroke-linecap="round"/>
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#g1)" stroke-width="14" stroke-linecap="round"
+                      stroke-dasharray="251.2" stroke-dashoffset="100"/>
+                <line x1="100" y1="100" x2="149" y2="32" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="100" cy="100" r="6" fill="#1a1a1a"/>
+                <defs>
+                  <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#f5a89a"/>
+                    <stop offset="100%" stop-color="#e85d4a"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span class="absolute bottom-0 left-1/2 -translate-x-1/2 text-2xl font-bold text-gray-900">61%</span>
+            </div>
+
+            <div class="flex justify-between items-end mb-4">
+              <div>
+                <div class="text-lg font-bold text-gray-900">61%</div>
+                <div class="text-xs text-gray-400">今日计划完成进度</div>
+              </div>
+              <div class="text-xs text-gray-400 text-right">目标字数 <span class="text-red-400 font-medium">3,000 字</span></div>
+            </div>
+            <div class="flex gap-2">
+              <input placeholder="输入今日实际字数…" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none"/>
+              <button class="bg-red-500 text-white rounded-lg px-4 py-2 text-sm font-medium">保存</button>
+            </div>
+          </div>
+
+          <!-- 本月累计卡 -->
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-2.5 h-1 bg-red-400 rounded-full"></div>
+              <span class="text-sm font-semibold text-gray-600">本月累计码字</span>
+            </div>
+            <div class="text-4xl font-bold text-gray-900 leading-none mb-1">18,450</div>
+            <p class="text-xs text-gray-400 mb-3">本月目标 100,000 字 · 已达标 <span class="text-red-400 font-medium">7</span> 天</p>
+            <div class="h-1.5 bg-gray-100 rounded-full mb-4 overflow-hidden">
+              <div class="progress-bar h-full" style="width:18.5%"></div>
+            </div>
+            <!-- 点阵 -->
+            <div class="grid grid-cols-7 gap-1.5 mb-4">
+              <!-- 已达标天 (7天) -->
+              <div class="aspect-square rounded-full bg-red-400"></div>
+              <div class="aspect-square rounded-full bg-red-400"></div>
+              <div class="aspect-square rounded-full bg-red-400"></div>
+              <div class="aspect-square rounded-full bg-red-400"></div>
+              <div class="aspect-square rounded-full bg-red-400"></div>
+              <div class="aspect-square rounded-full bg-red-400"></div>
+              <div class="aspect-square rounded-full bg-red-400"></div>
+              <!-- 部分完成 -->
+              <div class="aspect-square rounded-full bg-red-100"></div>
+              <div class="aspect-square rounded-full bg-red-100"></div>
+              <div class="aspect-square rounded-full bg-red-100"></div>
+              <div class="aspect-square rounded-full bg-red-100"></div>
+              <div class="aspect-square rounded-full bg-red-100"></div>
+              <!-- 今日（带环） -->
+              <div class="aspect-square rounded-full bg-red-100 ring-2 ring-red-400 ring-offset-1"></div>
+              <!-- 未填 -->
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+              <div class="aspect-square rounded-full bg-gray-100"></div>
+            </div>
+            <div class="flex justify-between items-end">
+              <div>
+                <div class="text-lg font-bold text-gray-900">18.5%</div>
+                <div class="text-xs text-gray-400">本月计划完成度</div>
+              </div>
+              <div class="text-xs text-gray-400 text-right">目标字数 <span class="text-red-400 font-medium">100,000 字</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右列：日历 -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col">
+          <div class="flex items-start justify-between mb-1">
+            <div>
+              <div class="text-lg font-bold text-gray-900">2026年3月</div>
+              <div class="text-xs text-gray-400 mt-0.5">本月已达标 <span class="text-red-400 font-medium">7</span> 天 · 连续打卡 <span class="text-orange-400 font-medium">7</span> 天 🔥</div>
+            </div>
+            <div class="flex gap-1">
+              <button class="w-7 h-7 bg-gray-100 rounded-lg text-sm text-gray-500 flex items-center justify-center">‹</button>
+              <button class="w-7 h-7 bg-gray-100 rounded-lg text-sm text-gray-500 flex items-center justify-center">›</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-7 mt-3 mb-1">
+            <div class="text-center text-xs text-gray-300 py-1">一</div>
+            <div class="text-center text-xs text-gray-300 py-1">二</div>
+            <div class="text-center text-xs text-gray-300 py-1">三</div>
+            <div class="text-center text-xs text-gray-300 py-1">四</div>
+            <div class="text-center text-xs text-gray-300 py-1">五</div>
+            <div class="text-center text-xs text-gray-300 py-1">六</div>
+            <div class="text-center text-xs text-gray-300 py-1">日</div>
+          </div>
+
+          <!-- 日历格 -->
+          <div class="grid grid-cols-7 gap-y-1 flex-1">
+            <!-- 3月1日是周日，偏移6格 -->
+            <div></div><div></div><div></div><div></div><div></div><div></div>
+            <!-- 1 -->
+            <div class="flex flex-col items-center py-1 rounded-xl">
+              <div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">1</div>
+              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-900 text-white">3,200</span>
+            </div>
+            <!-- 2~7 达标 -->
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">2</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-900 text-white">3,500</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">3</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-900 text-white">4,100</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">4</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-900 text-white">3,000</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">5</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-900 text-white">5,200</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">6</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-900 text-white">3,300</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">7</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-900 text-white">3,100</span></div>
+            <!-- 8~13 未达标 -->
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">8</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-red-100 text-red-400">1,200</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">9</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-red-100 text-red-400">800</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">10</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md text-gray-200">0</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">11</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md text-gray-200">0</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">12</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-red-100 text-red-400">500</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">13</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-red-100 text-red-400">2,100</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">14</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-red-100 text-red-400">1,800</span></div>
+            <!-- 15~18 继续 -->
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">15</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md text-gray-200">0</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">16</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md text-gray-200">0</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">17</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-red-100 text-red-400">1,500</span></div>
+            <div class="flex flex-col items-center py-1 rounded-xl"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 text-gray-700">18</div><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-red-100 text-red-400">2,200</span></div>
+            <!-- 19 今天 -->
+            <div class="flex flex-col items-center py-1 rounded-xl bg-red-50">
+              <div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full mb-1 bg-red-500 text-white">19</div>
+              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-red-100 text-red-400">1,820</span>
+            </div>
+            <!-- 20~31 未来 -->
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">20</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">21</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">22</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">23</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">24</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">25</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">26</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">27</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">28</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">29</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">30</div></div>
+            <div class="flex flex-col items-center py-1"><div class="w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full text-gray-200">31</div></div>
+          </div>
+
+          <!-- 底部统计 -->
+          <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-50">
+            <div class="bg-gray-50 rounded-xl p-3 text-center">
+              <div class="text-base font-bold text-gray-900">5,200</div>
+              <div class="text-xs text-gray-400 mt-0.5">单日最高字数</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3 text-center">
+              <div class="text-base font-bold text-red-400">7天</div>
+              <div class="text-xs text-gray-400 mt-0.5">当前连续打卡</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3 text-center">
+              <div class="text-base font-bold text-gray-900">2,430</div>
+              <div class="text-xs text-gray-400 mt-0.5">有效日均字数</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== 新增：底部成就条（融入原有白色卡片风格） ====== -->
+      <div class="mt-4 bg-white rounded-2xl px-5 py-4 shadow-sm border border-gray-100 flex items-center gap-4">
+        <!-- 左：标题 -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <span class="text-base">🏆</span>
+          <div>
+            <div class="text-sm font-semibold text-gray-700">我的成就</div>
+            <div class="text-xs text-gray-400">12 / 200 枚</div>
+          </div>
+        </div>
+
+        <div class="w-px h-8 bg-gray-100 flex-shrink-0"></div>
+
+        <!-- 中：已解锁徽章 -->
+        <div class="flex items-center gap-2 flex-1 overflow-hidden">
+          <!-- 刚解锁（带红点） -->
+          <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-xl px-2.5 py-1.5 flex-shrink-0 relative">
+            <div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white"></div>
+            <span class="text-base leading-none">🔥</span>
+            <div>
+              <div class="text-xs font-semibold text-gray-700 leading-tight">周更达人</div>
+              <div class="text-xs text-amber-500 leading-tight">连续7天达标</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-xl px-2.5 py-1.5 flex-shrink-0">
+            <span class="text-base leading-none">⚡</span>
+            <div>
+              <div class="text-xs font-semibold text-gray-700 leading-tight">爆发一日</div>
+              <div class="text-xs text-gray-400 leading-tight">单日5,200字</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-xl px-2.5 py-1.5 flex-shrink-0">
+            <span class="text-base leading-none">🎯</span>
+            <div>
+              <div class="text-xs font-semibold text-gray-700 leading-tight">初出茅庐</div>
+              <div class="text-xs text-gray-400 leading-tight">首次打卡</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-xl px-2.5 py-1.5 flex-shrink-0">
+            <span class="text-base leading-none">📚</span>
+            <div>
+              <div class="text-xs font-semibold text-gray-700 leading-tight">初尝甜头</div>
+              <div class="text-xs text-gray-400 leading-tight">累计1万字</div>
+            </div>
+          </div>
+
+          <!-- 进行中（虚线，有进度） -->
+          <div class="flex items-center gap-1.5 border border-dashed border-gray-200 rounded-xl px-2.5 py-1.5 flex-shrink-0">
+            <span class="text-base leading-none opacity-40">🔥</span>
+            <div>
+              <div class="text-xs font-semibold text-gray-400 leading-tight">月度勇士</div>
+              <div class="w-16 h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                <div class="progress-bar h-full" style="width:23%"></div>
+              </div>
+              <div class="text-xs text-gray-300 leading-tight">7/30天</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右：查看全部 -->
+        <button onclick="document.getElementById('gallery').classList.toggle('hidden')"
+          class="flex-shrink-0 text-xs text-amber-500 hover:text-amber-700 font-medium whitespace-nowrap">
+          查看全部 →
+        </button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ====== 成就陈列室（点击🏆按钮弹出，白色风格保持一致） ====== -->
+<div id="gallery" class="hidden fixed inset-0 bg-black/25 flex items-center justify-center z-50" onclick="this.classList.add('hidden')">
+  <div class="gallery bg-white rounded-2xl shadow-xl w-[780px] max-h-[85vh] overflow-hidden flex flex-col" onclick="event.stopPropagation()">
+
+    <!-- 陈列室标题 -->
+    <div class="px-6 pt-5 pb-4 border-b border-gray-100">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-gray-800">🏆 成就陈列室</h3>
+          <p class="text-xs text-gray-400 mt-0.5">已解锁 <span class="text-amber-500 font-bold">12</span> / 200 枚</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <div class="text-xs text-gray-400 mb-1">总进度</div>
+            <div class="w-36 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="progress-bar h-full" style="width:6%"></div>
+            </div>
+          </div>
+          <button onclick="document.getElementById('gallery').classList.add('hidden')"
+            class="w-7 h-7 bg-gray-100 rounded-lg text-gray-400 hover:bg-gray-200 flex items-center justify-center text-sm">✕</button>
+        </div>
+      </div>
+      <!-- 分类标签 -->
+      <div class="flex gap-1 mt-3 text-xs flex-wrap">
+        <button class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-600 font-medium border border-amber-100">全部</button>
+        <button class="px-2.5 py-1 rounded-lg text-gray-400 hover:bg-gray-50">🔥 连续打卡</button>
+        <button class="px-2.5 py-1 rounded-lg text-gray-400 hover:bg-gray-50">⚡ 单日爆发</button>
+        <button class="px-2.5 py-1 rounded-lg text-gray-400 hover:bg-gray-50">📚 累计里程</button>
+        <button class="px-2.5 py-1 rounded-lg text-gray-400 hover:bg-gray-50">🗓️ 月度成就</button>
+        <button class="px-2.5 py-1 rounded-lg text-gray-400 hover:bg-gray-50">🌅 时间特质</button>
+        <button class="px-2.5 py-1 rounded-lg text-gray-400 hover:bg-gray-50">🚀 超额挑战</button>
+        <button class="px-2.5 py-1 rounded-lg text-gray-400 hover:bg-gray-50">💪 逆袭系列</button>
+        <button class="px-2.5 py-1 rounded-lg text-gray-400 hover:bg-gray-50">🌟 稀有成就</button>
+        <button class="px-2.5 py-1 rounded-lg text-gray-400 hover:bg-gray-50">🎭 隐藏彩蛋</button>
+      </div>
+    </div>
+
+    <!-- 徽章网格 -->
+    <div class="flex-1 overflow-y-auto p-5">
+
+      <!-- 连续打卡 -->
+      <div class="mb-5">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">🔥 连续打卡</div>
+        <div class="grid grid-cols-8 gap-2.5">
+          <!-- 已解锁 -->
+          <div class="text-center cursor-pointer group">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-orange-300 to-red-400 flex items-center justify-center text-xl shadow-sm mb-1.5 group-hover:scale-105 transition-transform" style="box-shadow:0 0 8px 2px rgba(232,93,74,0.3)">🔥</div>
+            <div class="text-xs font-medium text-gray-700 leading-tight">初次点火</div>
+            <div class="text-xs text-amber-500">连续3天</div>
+          </div>
+          <div class="text-center cursor-pointer group">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-orange-300 to-red-400 flex items-center justify-center text-xl shadow-sm mb-1.5 group-hover:scale-105 transition-transform" style="box-shadow:0 0 8px 2px rgba(232,93,74,0.3)">🔥</div>
+            <div class="text-xs font-medium text-gray-700 leading-tight">周更达人</div>
+            <div class="text-xs text-amber-500">连续7天</div>
+          </div>
+          <!-- 进行中 -->
+          <div class="text-center cursor-pointer">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5 border-2 border-dashed border-orange-200 relative overflow-hidden">
+              <span class="opacity-30 text-lg">🔥</span>
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-50"><div class="progress-bar h-full" style="width:50%"></div></div>
+            </div>
+            <div class="text-xs font-medium text-gray-400 leading-tight">双周勇士</div>
+            <div class="text-xs text-gray-300">7/14天</div>
+          </div>
+          <!-- 锁定 -->
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">🔥</div><div class="text-xs font-medium text-gray-500">三周精英</div><div class="text-xs text-gray-400">连续21天</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">🔥</div><div class="text-xs font-medium text-gray-500">月度勇士</div><div class="text-xs text-gray-400">连续30天</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">🔥</div><div class="text-xs font-medium text-gray-500">铁打意志</div><div class="text-xs text-gray-400">连续45天</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">🔥</div><div class="text-xs font-medium text-gray-500">两月不息</div><div class="text-xs text-gray-400">连续60天</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">🔥</div><div class="text-xs font-medium text-gray-500">季度传说</div><div class="text-xs text-gray-400">连续90天</div></div>
+        </div>
+      </div>
+
+      <!-- 单日爆发 -->
+      <div class="mb-5">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">⚡ 单日爆发</div>
+        <div class="grid grid-cols-8 gap-2.5">
+          <div class="text-center cursor-pointer group">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-yellow-300 to-amber-400 flex items-center justify-center text-xl shadow-sm mb-1.5 group-hover:scale-105 transition-transform" style="box-shadow:0 0 8px 2px rgba(251,191,36,0.3)">⚡</div>
+            <div class="text-xs font-medium text-gray-700">小试牛刀</div>
+            <div class="text-xs text-amber-500">单日2000字</div>
+          </div>
+          <div class="text-center cursor-pointer group">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-yellow-300 to-amber-400 flex items-center justify-center text-xl shadow-sm mb-1.5 group-hover:scale-105 transition-transform" style="box-shadow:0 0 8px 2px rgba(251,191,36,0.3)">⚡</div>
+            <div class="text-xs font-medium text-gray-700">爆发一日</div>
+            <div class="text-xs text-amber-500">单日5000字</div>
+          </div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">⚡</div><div class="text-xs font-medium text-gray-500">一万字侠</div><div class="text-xs text-gray-400">单日1万字</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">⚡</div><div class="text-xs font-medium text-gray-500">字如泉涌</div><div class="text-xs text-gray-400">单日2万字</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">🌙</div><div class="text-xs font-medium text-gray-500">夜猫子</div><div class="text-xs text-gray-400">凌晨达标</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">🌄</div><div class="text-xs font-medium text-gray-500">破晓先锋</div><div class="text-xs text-gray-400">6点前打卡</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">🚀</div><div class="text-xs font-medium text-gray-500">百倍超神</div><div class="text-xs text-gray-400">超目标300%</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">⚡</div><div class="text-xs font-medium text-gray-500">封神之日</div><div class="text-xs text-gray-400">单日5万字</div></div>
+        </div>
+      </div>
+
+      <!-- 累计里程 -->
+      <div class="mb-5">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">📚 累计里程碑</div>
+        <div class="grid grid-cols-8 gap-2.5">
+          <div class="text-center cursor-pointer group">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-blue-300 to-purple-400 flex items-center justify-center text-xl shadow-sm mb-1.5 group-hover:scale-105 transition-transform" style="box-shadow:0 0 8px 2px rgba(147,51,234,0.2)">📚</div>
+            <div class="text-xs font-medium text-gray-700">初尝甜头</div>
+            <div class="text-xs text-purple-400">累计1万字</div>
+          </div>
+          <!-- 进行中 -->
+          <div class="text-center cursor-pointer">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5 border-2 border-dashed border-purple-200 relative overflow-hidden">
+              <span class="opacity-30 text-lg">📚</span>
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-50"><div class="h-full rounded-full bg-purple-300" style="width:37%"></div></div>
+            </div>
+            <div class="text-xs font-medium text-gray-400">著作等身</div>
+            <div class="text-xs text-gray-300">1.8/5万</div>
+          </div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">📚</div><div class="text-xs font-medium text-gray-500">长篇大论</div><div class="text-xs text-gray-400">累计10万字</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">📚</div><div class="text-xs font-medium text-gray-500">半部书稿</div><div class="text-xs text-gray-400">累计50万字</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">👑</div><div class="text-xs font-medium text-gray-500">百万作家</div><div class="text-xs text-gray-400">累计100万字</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">📚</div><div class="text-xs font-medium text-gray-500">长河叙事</div><div class="text-xs text-gray-400">累计200万字</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">🌌</div><div class="text-xs font-medium text-gray-500">文字宇宙</div><div class="text-xs text-gray-400">累计500万字</div></div>
+          <div class="text-center opacity-30"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-xl mb-1.5">📚</div><div class="text-xs font-medium text-gray-500">连载之王</div><div class="text-xs text-gray-400">单月20万字</div></div>
+        </div>
+      </div>
+
+      <!-- 隐藏彩蛋 -->
+      <div>
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">🎭 隐藏彩蛋 <span class="font-normal normal-case text-gray-300">· 解锁前不透露条件</span></div>
+        <div class="grid grid-cols-8 gap-2.5">
+          <div class="text-center cursor-pointer group">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-pink-300 to-rose-400 flex items-center justify-center text-xl shadow-sm mb-1.5 group-hover:scale-105 transition-transform">🎭</div>
+            <div class="text-xs font-medium text-gray-700">谜之写手</div>
+            <div class="text-xs text-pink-400">已解锁</div>
+          </div>
+          <!-- 未知 -->
+          <div class="text-center opacity-20"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 mb-1.5">?</div><div class="text-xs text-gray-400">???</div></div>
+          <div class="text-center opacity-20"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 mb-1.5">?</div><div class="text-xs text-gray-400">???</div></div>
+          <div class="text-center opacity-20"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 mb-1.5">?</div><div class="text-xs text-gray-400">???</div></div>
+          <div class="text-center opacity-20"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 mb-1.5">?</div><div class="text-xs text-gray-400">???</div></div>
+          <div class="text-center opacity-20"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 mb-1.5">?</div><div class="text-xs text-gray-400">???</div></div>
+          <div class="text-center opacity-20"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 mb-1.5">?</div><div class="text-xs text-gray-400">???</div></div>
+          <div class="text-center opacity-20"><div class="w-12 h-12 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 mb-1.5">?</div><div class="text-xs text-gray-400">???</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-3 border-t border-gray-100 flex justify-between items-center bg-gray-50/50">
+      <p class="text-xs text-gray-400">💡 隐藏彩蛋需要自己探索，解锁时会有提示</p>
+      <button onclick="document.getElementById('gallery').classList.add('hidden')"
+        class="px-4 py-1.5 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-700">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 右下角解锁 Toast ====== -->
+<div class="toast fixed bottom-6 right-6 z-50 bg-white rounded-2xl shadow-xl border border-amber-100 p-4 w-64" style="box-shadow:0 8px 32px rgba(232,93,74,0.15)">
+  <div class="flex items-start gap-3">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-300 to-red-400 flex items-center justify-center text-xl flex-shrink-0 shadow-sm" style="box-shadow:0 0 10px 2px rgba(232,93,74,0.3)">🔥</div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-1.5 mb-0.5">
+        <span class="text-xs font-bold text-amber-500">🎉 成就解锁！</span>
+      </div>
+      <div class="text-sm font-bold text-gray-800 leading-tight">周更达人</div>
+      <div class="text-xs text-gray-400 leading-tight mt-0.5">连续7天完成每日目标</div>
+      <div class="text-xs text-amber-500 mt-1.5 bg-amber-50 rounded-lg px-2 py-1 leading-snug">
+        再坚持 23 天可解锁「月度勇士」
+      </div>
+    </div>
+    <button class="text-gray-300 hover:text-gray-500 text-xs mt-0.5 flex-shrink-0">✕</button>
+  </div>
+</div>
+
+</body>
+</html>

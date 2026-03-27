@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>周计划 - 效果图</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 40px;
+      color: #333;
+    }
+    h1 { text-align: center; margin-bottom: 20px; color: #e74c3c; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 40px; }
+
+    .comparison {
+      display: flex;
+      gap: 60px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 60px;
+    }
+    .version { text-align: center; }
+    .version h3 { margin-bottom: 16px; color: #666; font-size: 14px; }
+
+    /* Tab 样式 */
+    .tabs {
+      display: inline-flex;
+      gap: 4px;
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 4px;
+    }
+    .tab {
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+    }
+    .tab.active {
+      background: #333;
+      color: white;
+    }
+    .tab:hover:not(.active) {
+      background: #f5f5f5;
+    }
+    .tab.new {
+      position: relative;
+    }
+    .tab.new::after {
+      content: 'NEW';
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      font-size: 8px;
+      background: #FF6B6B;
+      color: white;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    /* 页面标题 */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .page-header h2 {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    /* 周计划内容区域 */
+    .week-content {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 24px;
+      border: 1px solid #eee;
+      max-width: 900px;
+    }
+
+    .week-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .week-nav button {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid #e5e5e5;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .week-nav button:hover { background: #f5f5f5; }
+    .week-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    .week-range {
+      font-size: 12px;
+      color: #888;
+      margin-left: 8px;
+    }
+
+    /* 周目标 */
+    .week-goals {
+      background: linear-gradient(135deg, #fff5f5, #fdf2f8);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .week-goals-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #FF6B6B;
+      margin-bottom: 12px;
+    }
+    .goal-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,107,107,0.1);
+    }
+    .goal-item:last-child { border-bottom: none; }
+    .goal-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .goal-checkbox.done {
+      background: #FF6B6B;
+      border-color: #FF6B6B;
+      color: white;
+      font-size: 10px;
+    }
+    .goal-text {
+      font-size: 14px;
+      color: #333;
+    }
+    .goal-text.done {
+      color: #999;
+      text-decoration: line-through;
+    }
+
+    /* 七天格子 */
+    .week-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .day-card {
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 140px;
+      border: 1px solid #eee;
+    }
+    .day-card.today {
+      background: #fff5f5;
+      border-color: #FF6B6B;
+    }
+    .day-header {
+      text-align: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .day-name {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 2px;
+    }
+    .day-date {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+    .day-card.today .day-date {
+      color: #FF6B6B;
+    }
+    .day-tasks {
+      font-size: 11px;
+      color: #666;
+    }
+    .day-task {
+      padding: 4px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .day-task-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #ccc;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .day-task-dot.done { background: #4ade80; }
+    .day-task-text.done {
+      color: #999;
+      text-decoration: line-through;
+    }
+
+    .add-goal-btn {
+      width: 100%;
+      padding: 8px;
+      border: 1px dashed #ddd;
+      border-radius: 8px;
+      background: transparent;
+      color: #999;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .add-goal-btn:hover {
+      border-color: #FF6B6B;
+      color: #FF6B6B;
+    }
+
+    /* 统计 */
+    .week-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .stat-card {
+      flex: 1;
+      background: #f8f8f8;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #FF6B6B;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .note {
+      max-width: 800px;
+      margin: 40px auto 0;
+      background: #fff9e6;
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 4px solid #f5a623;
+    }
+    .note h4 { margin-bottom: 12px; color: #333; }
+    .note ul { padding-left: 20px; font-size: 14px; color: #666; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <h1>周计划功能 - 效果图</h1>
+  <p class="subtitle">在日计划和月计划之间增加周计划</p>
+
+  <!-- Tab 对比 -->
+  <div class="comparison">
+    <div class="version">
+      <h3>原来的 Tab</h3>
+      <div class="tabs">
+        <button class="tab active">日计划</button>
+        <button class="tab">月计划</button>
+        <button class="tab">年计划</button>
+      </div>
+    </div>
+
+    <div class="version">
+      <h3>→</h3>
+      <div style="font-size: 36px; margin-top: 8px;">➡️</div>
+    </div>
+
+    <div class="version">
+      <h3>新增周计划 Tab</h3>
+      <div class="tabs">
+        <button class="tab">日计划</button>
+        <button class="tab active new">周计划</button>
+        <button class="tab">月计划</button>
+        <button class="tab">年计划</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 周计划页面内容 -->
+  <div style="max-width: 900px; margin: 0 auto;">
+    <div class="page-header">
+      <h2>💪 健康管理</h2>
+    </div>
+
+    <div class="tabs" style="margin-bottom: 0;">
+      <button class="tab">日计划</button>
+      <button class="tab active">周计划</button>
+      <button class="tab">月计划</button>
+      <button class="tab">年计划</button>
+    </div>
+
+    <div class="week-content">
+      <!-- 周导航 -->
+      <div class="week-header">
+        <div class="week-nav">
+          <button>‹</button>
+          <span class="week-label">第13周</span>
+          <span class="week-range">3/24 - 3/30</span>
+          <button>›</button>
+        </div>
+        <button style="padding: 6px 12px; border-radius: 8px; border: 1px solid #FF6B6B; background: white; color: #FF6B6B; font-size: 12px; cursor: pointer;">
+          回到本周
+        </button>
+      </div>
+
+      <!-- 周目标 -->
+      <div class="week-goals">
+        <div class="week-goals-title">🎯 本周目标</div>
+        <div class="goal-item">
+          <div class="goal-checkbox done">✓</div>
+          <span class="goal-text done">完成首尔旅行vlog剪辑</span>
+        </div>
+        <div class="goal-item">
+          <div class="goal-checkbox done">✓</div>
+          <span class="goal-text done">健身3次以上</span>
+        </div>
+        <div class="goal-item">
+          <div class="goal-checkbox"></div>
+          <span class="goal-text">读完《原子习惯》第5章</span>
+        </div>
+        <div class="goal-item">
+          <div class="goal-checkbox"></div>
+          <span class="goal-text">准备下周品牌合作方案</span>
+        </div>
+        <button class="add-goal-btn">+ 添加周目标</button>
+      </div>
+
+      <!-- 七天格子 -->
+      <div class="week-days">
+        <div class="day-card">
+          <div class="day-header">
+            <div class="day-name">周一</div>
+            <div class="day-date">24</div>
+          </div>
+          <div class="day-tasks">
+            <div class="day-task">
+              <span class="day-task-dot done"></span>
+              <span class="day-task-text done">晨跑</span>
+            </div>
+            <div class="day-task">
+              <span class="day-task-dot done"></span>
+              <span class="day-task-text done">剪辑vlog</span>
+            </div>
+          </div>
+        </div>
+        <div class="day-card today">
+          <div class="day-header">
+            <div class="day-name">周二</div>
+            <div class="day-date">25</div>
+          </div>
+          <div class="day-tasks">
+            <div class="day-task">
+              <span class="day-task-dot"></span>
+              <span class="day-task-text">健身</span>
+            </div>
+            <div class="day-task">
+              <span class="day-task-dot"></span>
+              <span class="day-task-text">写文案</span>
+            </div>
+          </div>
+        </div>
+        <div class="day-card">
+          <div class="day-header">
+            <div class="day-name">周三</div>
+            <div class="day-date">26</div>
+          </div>
+          <div class="day-tasks">
+            <div class="day-task">
+              <span class="day-task-dot"></span>
+              <span class="day-task-text">配音录制</span>
+            </div>
+          </div>
+        </div>
+        <div class="day-card">
+          <div class="day-header">
+            <div class="day-name">周四</div>
+            <div class="day-date">27</div>
+          </div>
+          <div class="day-tasks">
+            <div class="day-task">
+              <span class="day-task-dot"></span>
+              <span class="day-task-text">健身</span>
+            </div>
+          </div>
+        </div>
+        <div class="day-card">
+          <div class="day-header">
+            <div class="day-name">周五</div>
+            <div class="day-date">28</div>
+          </div>
+          <div class="day-tasks">
+            <div class="day-task">
+              <span class="day-task-dot"></span>
+              <span class="day-task-text">发布vlog</span>
+            </div>
+          </div>
+        </div>
+        <div class="day-card">
+          <div class="day-header">
+            <div class="day-name">周六</div>
+            <div class="day-date">29</div>
+          </div>
+          <div class="day-tasks">
+            <div class="day-task">
+              <span class="day-task-dot"></span>
+              <span class="day-task-text">休息</span>
+            </div>
+          </div>
+        </div>
+        <div class="day-card">
+          <div class="day-header">
+            <div class="day-name">周日</div>
+            <div class="day-date">30</div>
+          </div>
+          <div class="day-tasks">
+            <div class="day-task">
+              <span class="day-task-dot"></span>
+              <span class="day-task-text">复盘总结</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 周统计 -->
+      <div class="week-stats">
+        <div class="stat-card">
+          <div class="stat-value">2/4</div>
+          <div class="stat-label">周目标完成</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">5/12</div>
+          <div class="stat-label">日任务完成</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">42%</div>
+          <div class="stat-label">本周进度</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 说明 -->
+  <div class="note">
+    <h4>💡 周计划功能说明</h4>
+    <ul>
+      <li><strong>周目标</strong>：设置本周要完成的大目标（3-5个）</li>
+      <li><strong>七天格子</strong>：一眼看到每天的任务安排，今天高亮显示</li>
+      <li><strong>周统计</strong>：显示周目标完成率、日任务完成数、整体进度</li>
+      <li><strong>周导航</strong>：可以切换查看上周/下周，快速回到本周</li>
+    </ul>
+  </div>
+</body>
+</html>
