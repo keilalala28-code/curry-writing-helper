@@ -2099,4 +2099,126 @@ app.post('/media/script/transcribe', async (c) => {
   return c.json({ error: '视频转录功能在当前部署环境中不可用' }, 501)
 })
 
+// ─── 拆文分析 ─────────────────────────────────────────────────────────────────
+
+app.post('/chawen/analyze', async (c) => {
+  const { content, title } = await c.req.json() as { content: string; title?: string }
+  if (!content || content.trim().length < 100) {
+    return c.json({ error: '文章内容太短，至少需要100字' }, 400)
+  }
+
+  const baseUrl = process.env.AI_BASE_URL || 'https://api.anthropic.com'
+  const apiKey  = process.env.AI_API_KEY
+  const model   = process.env.AI_MODEL || 'claude-opus-4-5-20251101'
+
+  // 截取前 12000 字送 AI（避免 token 超限）
+  const excerpt = content.slice(0, 12000)
+  const totalLen = content.length
+
+  const prompt = `你是专业的中文网文结构分析师。请对以下文章进行深度拆解，严格按照 JSON 格式返回，不要有任何其他文字。
+
+文章标题：${title || '（未提供）'}
+文章内容（前${excerpt.length}字，全文约${totalLen}字）：
+---
+${excerpt}
+---
+
+请返回如下 JSON 结构（所有字段必填，不能省略）：
+{
+  "overview": {
+    "theme_type": "主题类型，如：重生逆袭·豪门情感",
+    "summary": "一句话梗概，30字以内",
+    "core_conflicts": ["冲突1", "冲突2", "冲突3"],
+    "attraction_hooks": ["吸引机制1", "吸引机制2", "吸引机制3", "吸引机制4"],
+    "background": "故事背景描述，100字以内",
+    "characters": [
+      {
+        "name": "角色名",
+        "role_type": "女主/男主/反派/配角",
+        "role_position": "角色定位",
+        "identity": "身份设定",
+        "personality": "性格特征",
+        "motivation": "核心动机",
+        "obstacles": "限制阻碍"
+      }
+    ],
+    "emotion_curve": [
+      {"label": "情绪节点名称", "chapter_range": "第X-X章", "intensity": 0.8, "description": "节点描述"},
+      {"label": "情绪节点名称", "chapter_range": "第X-X章", "intensity": 0.3, "description": "节点描述"},
+      {"label": "情绪节点名称", "chapter_range": "第X-X章", "intensity": 0.95, "description": "节点描述"},
+      {"label": "情绪节点名称", "chapter_range": "第X-X章", "intensity": 0.6, "description": "节点描述"}
+    ]
+  },
+  "storyline": {
+    "main_line": {
+      "title": "主线标题",
+      "stages": [
+        {"stage": "开端", "chapter_range": "第1-X章", "description": "100字以内描述"},
+        {"stage": "发展", "chapter_range": "第X-X章", "description": "100字以内描述"},
+        {"stage": "高潮", "chapter_range": "第X-X章", "description": "100字以内描述"},
+        {"stage": "结尾", "chapter_range": "第X-X章", "description": "100字以内描述"}
+      ]
+    },
+    "sub_lines": [
+      {"index": 1, "title": "支线标题", "description": "支线描述，60字以内"},
+      {"index": 2, "title": "支线标题", "description": "支线描述，60字以内"}
+    ]
+  },
+  "prologue": {
+    "hook_design": "导语钩子设计分析，80字以内",
+    "background_info": "背景信息交代方式，80字以内",
+    "narrative_tone": "叙事基调分析，80字以内"
+  },
+  "chapters": [
+    {
+      "chapter_num": 1,
+      "chapter_title": "章节标题",
+      "core_event": "核心事件，50字以内",
+      "emotion_change": "情绪变化，40字以内",
+      "task_dynamic": "任务动态，40字以内",
+      "chapter_role": "章节作用，40字以内",
+      "conflict_progress": "冲突进展，40字以内",
+      "suspense_foreshadow": "悬念与伏笔，50字以内"
+    }
+  ]
+}
+
+注意：
+1. chapters 只需分析文章中实际存在的章节，若正文未明确分章则按内容段落划分，最多分析20章
+2. emotion_curve 中 intensity 取值 0-1，代表情绪强度
+3. 所有分析基于提供的文章内容，不要脑补未出现的情节`
+
+  try {
+    const res = await fetch(`${baseUrl}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.text()
+      return c.json({ error: `AI API 错误: ${res.status}`, detail: err }, 502)
+    }
+
+    const data = await res.json() as { content: { type: string; text: string }[] }
+    const raw = data.content?.find(b => b.type === 'text')?.text || ''
+    try {
+      const parsed = parseAiJson(raw)
+      return c.json(parsed)
+    } catch (e) {
+      return c.json({ error: '解析失败', raw }, 502)
+    }
+  } catch (e) {
+    return c.json({ error: String(e) }, 502)
+  }
+})
+
 export default handle(app)

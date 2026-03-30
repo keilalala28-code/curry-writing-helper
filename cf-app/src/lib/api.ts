@@ -295,6 +295,10 @@ export const api = {
     getCalendar: (year: number) => get<string[]>('/diary/calendar', { year }),
     getStats: () => get<{ total_entries: number; current_year_days: number; recent: { date: string; year: number; preview: string }[] }>('/diary/stats'),
   },
+  chawen: {
+    analyze: (data: { content: string; title?: string }) =>
+      post<ChawenResult>('/chawen/analyze', data),
+  },
   media: {
     getPlatforms: () => get<MediaPlatform[]>('/media/platforms'),
     updatePlatform: (platform: string, data: { followers: number; month_change: number }) =>
@@ -407,4 +411,51 @@ export interface BadgeDef {
   category: string
   unlocked: boolean
   unlock_date: string | null
+}
+
+export interface ChawenResult {
+  overview: {
+    theme_type: string
+    summary: string
+    core_conflicts: string[]
+    attraction_hooks: string[]
+    background: string
+    characters: {
+      name: string
+      role_type: string
+      role_position: string
+      identity: string
+      personality: string
+      motivation: string
+      obstacles: string
+    }[]
+    emotion_curve: {
+      label: string
+      chapter_range: string
+      intensity: number
+      description: string
+    }[]
+  }
+  storyline: {
+    main_line: {
+      title: string
+      stages: { stage: string; chapter_range: string; description: string }[]
+    }
+    sub_lines: { index: number; title: string; description: string }[]
+  }
+  prologue: {
+    hook_design: string
+    background_info: string
+    narrative_tone: string
+  }
+  chapters: {
+    chapter_num: number
+    chapter_title: string
+    core_event: string
+    emotion_change: string
+    task_dynamic: string
+    chapter_role: string
+    conflict_progress: string
+    suspense_foreshadow: string
+  }[]
 }
