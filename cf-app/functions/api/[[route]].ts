@@ -1665,6 +1665,30 @@ app.get('/badges', ownerOnly, async (c) => {
   return c.json({ badges, total: BADGE_DEFS.length, unlocked_count: unlocked.size })
 })
 
+// ─── Writing Record Spreadsheet ───────────────────────────────────────────────
+
+app.get('/writing-record', async (c) => {
+  const row = await c.env.DB.prepare(
+    'SELECT data, updated_at FROM writing_record_sheet WHERE id = 1'
+  ).first<{ data: string; updated_at: string }>()
+  if (!row) return c.json({ data: null, updated_at: null })
+  try {
+    return c.json({ data: JSON.parse(row.data), updated_at: row.updated_at })
+  } catch {
+    return c.json({ data: null, updated_at: null })
+  }
+})
+
+app.post('/writing-record', ownerOnly, async (c) => {
+  const { data } = await c.req.json()
+  if (!data) return c.json({ error: 'data required' }, 400)
+  const now = new Date().toISOString()
+  await c.env.DB.prepare(
+    'INSERT INTO writing_record_sheet (id, data, updated_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at'
+  ).bind(JSON.stringify(data), now).run()
+  return c.json({ success: true, updated_at: now })
+})
+
 // ─── Routine Preset ───────────────────────────────────────────────────────────
 
 app.get('/routine/preset', async (c) => {

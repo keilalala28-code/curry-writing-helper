@@ -16,6 +16,8 @@
     "pages:dev": "wrangler pages dev dist --d1=DB=curry-db"
   },
   "dependencies": {
+    "@fortune-sheet/core": "^1.0.4",
+    "@fortune-sheet/react": "^1.0.4",
     "@libsql/client": "^0.14.0",
     "exceljs": "^4.4.0",
     "hono": "^4.4.0",

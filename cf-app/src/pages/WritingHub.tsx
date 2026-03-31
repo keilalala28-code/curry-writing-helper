@@ -8,14 +8,16 @@ import Import from './Import'
 import IdeaOutline from './IdeaOutline'
 import BatchAnalysis from './BatchAnalysis'
 import ChawenAnalysis from './ChawenAnalysis'
+import WritingRecord from './WritingRecord'
 
-type Tab = 'writing' | 'browse' | 'search' | 'tags' | 'import' | 'outline' | 'chawen' | 'batch'
+type Tab = 'writing' | 'browse' | 'search' | 'tags' | 'import' | 'outline' | 'chawen' | 'batch' | 'record'
 
 const ALL_TABS: { id: Tab; label: string; icon: string; ownerOnly: boolean }[] = [
   { id: 'writing', label: '码字计划', icon: '✍️', ownerOnly: false },
   { id: 'browse', label: '分类浏览', icon: '📂', ownerOnly: false },
   { id: 'search', label: '搜索文章', icon: '🔍', ownerOnly: false },
   { id: 'tags', label: '标签管理', icon: '🏷️', ownerOnly: false },
+  { id: 'record', label: '写作记录', icon: '📊', ownerOnly: false },
   { id: 'import', label: '导入文章', icon: '📥', ownerOnly: true },
   { id: 'outline', label: '生成细纲', icon: '💡', ownerOnly: false },
   { id: 'chawen', label: '拆文分析', icon: '📖', ownerOnly: false },
@@ -55,6 +57,7 @@ export default function WritingHub() {
         {active === 'browse' && <Browse />}
         {active === 'search' && <Search />}
         {active === 'tags' && <Tags />}
+        {active === 'record' && <WritingRecord />}
         {active === 'import' && <Import />}
         {active === 'outline' && <IdeaOutline />}
         {active === 'chawen' && <ChawenAnalysis />}
