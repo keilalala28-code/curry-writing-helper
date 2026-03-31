@@ -14,11 +14,23 @@ const defaultSheetData = [
       { r: 0, c: 3, v: { v: '累计字数', ct: { fa: 'General', t: 'g' }, bg: '#f3f4f6', fc: '#1f2937', bl: 1 } },
       { r: 0, c: 4, v: { v: '备注', ct: { fa: 'General', t: 'g' }, bg: '#f3f4f6', fc: '#1f2937', bl: 1 } },
     ],
+    row: 100,
+    column: 10,
     config: {
       columnlen: { 0: 100, 1: 150, 2: 100, 3: 100, 4: 200 },
     },
   },
 ]
+
+// CSS fix for FortuneSheet scroll issue
+const scrollFixStyle = `
+  .fortune-sheet-container .luckysheet-scrollbar-y {
+    overflow-y: scroll !important;
+  }
+  .fortune-sheet-container .luckysheet-cell-main {
+    overflow: auto !important;
+  }
+`
 
 export default function WritingRecord() {
   const [data, setData] = useState<typeof defaultSheetData | null>(null)
@@ -77,6 +89,7 @@ export default function WritingRecord() {
 
   return (
     <div className="space-y-4">
+      <style>{scrollFixStyle}</style>
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-500 dark:text-gray-400">
           {lastSaved && <span>上次保存: {lastSaved}</span>}
