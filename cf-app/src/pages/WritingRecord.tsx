@@ -92,7 +92,7 @@ export default function WritingRecord() {
         )}
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white dark:bg-gray-900" style={{ height: '600px' }}>
+      <div className="border rounded-lg bg-white dark:bg-gray-900" style={{ height: '600px', position: 'relative' }}>
         {data && (
           <Workbook
             data={data}
